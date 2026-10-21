@@ -1,0 +1,22 @@
+# .NET build output
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# Local config with secrets (copy appsettings.Development.example.json)
+**/appsettings.Development.json
+
+# Node / Angular (frontend)
+node_modules/
+dist/
+.angular/
+
+# OS
+.DS_Store
+Thumbs.db
