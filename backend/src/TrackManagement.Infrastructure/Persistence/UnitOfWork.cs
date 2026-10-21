@@ -2,8 +2,15 @@ using TrackManagement.Domain.Common;
 
 namespace TrackManagement.Infrastructure.Persistence;
 
-internal sealed class UnitOfWork(AppDbContext db) : IUnitOfWork
+internal sealed class UnitOfWork : IUnitOfWork
 {
+    private readonly AppDbContext _db;
+
+    public UnitOfWork(AppDbContext db)
+    {
+        _db = db;
+    }
+
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
-        db.SaveChangesAsync(cancellationToken);
+        _db.SaveChangesAsync(cancellationToken);
 }

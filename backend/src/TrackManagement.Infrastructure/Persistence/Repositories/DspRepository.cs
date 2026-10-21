@@ -3,22 +3,30 @@ using TrackManagement.Domain.Dsps;
 
 namespace TrackManagement.Infrastructure.Persistence.Repositories;
 
-internal sealed class DspRepository(AppDbContext db) : IDspRepository
+internal sealed class DspRepository : IDspRepository
 {
+    private readonly AppDbContext _db;
+
+    public DspRepository(AppDbContext db)
+    {
+        _db = db;
+    }
+
     public Task<Dsp?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Dsps.FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+        _db.Dsps.FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<Dsp>> GetAllAsync(CancellationToken cancellationToken = default) =>
-        await db.Dsps.AsNoTracking().OrderBy(d => d.Name).ToListAsync(cancellationToken);
+        await _db.Dsps.AsNoTracking().OrderBy(d => d.Name).ToListAsync(cancellationToken);
 
     public Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Dsps.AnyAsync(d => d.Id == id, cancellationToken);
+        _db.Dsps.AnyAsync(d => d.Id == id, cancellationToken);
 
     public Task<bool> NameExistsAsync(string name, CancellationToken cancellationToken = default)
     {
         var trimmed = name.Trim();
-        return db.Dsps.AnyAsync(d => d.Name == trimmed, cancellationToken);
+        return _db.Dsps.AnyAsync(d => d.Name == trimmed, cancellationToken);
     }
 
-    public void Add(Dsp dsp) => db.Dsps.Add(dsp);
+    public async Task AddAsync(Dsp dsp, CancellationToken cancellationToken = default) =>
+        await _db.Dsps.AddAsync(dsp, cancellationToken);
 }

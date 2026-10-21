@@ -15,12 +15,12 @@ public sealed partial record CountryCode
     public static CountryCode Create(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new BusinessRuleViolationException("Country code is required.");
+            throw new DomainException("Country code is required.");
 
         var normalized = value.Trim().ToUpperInvariant();
 
         if (!Pattern().IsMatch(normalized))
-            throw new BusinessRuleViolationException($"'{value}' is not a valid ISO 3166-1 alpha-2 country code.");
+            throw new DomainException($"'{value}' is not a valid ISO 3166-1 alpha-2 country code.");
 
         return new CountryCode(normalized);
     }

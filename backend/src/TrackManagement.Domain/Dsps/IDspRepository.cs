@@ -10,5 +10,5 @@ public interface IDspRepository
 
     Task<bool> NameExistsAsync(string name, CancellationToken cancellationToken = default);
 
-    void Add(Dsp dsp);
+    Task AddAsync(Dsp dsp, CancellationToken cancellationToken = default);
 }

@@ -11,7 +11,7 @@ public interface ITrackRepository
 
     Task<bool> IsrcExistsAsync(Isrc isrc, CancellationToken cancellationToken = default);
 
-    void Add(Track track);
+    Task AddAsync(Track track, CancellationToken cancellationToken = default);
 
     void Remove(Track track);
 }

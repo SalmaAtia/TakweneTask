@@ -18,14 +18,14 @@ public sealed partial record Isrc
     public static Isrc Create(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new BusinessRuleViolationException("ISRC is required.");
+            throw new DomainException("ISRC is required.");
 
         var compact = value.Replace("-", string.Empty)
             .Replace(" ", string.Empty)
             .ToUpperInvariant();
 
         if (!CompactPattern().IsMatch(compact))
-            throw new BusinessRuleViolationException($"'{value}' is not a valid ISRC (expected CC-XXX-YY-NNNNN).");
+            throw new DomainException($"'{value}' is not a valid ISRC (expected CC-XXX-YY-NNNNN).");
 
         return new Isrc($"{compact[..2]}-{compact[2..5]}-{compact[5..7]}-{compact[7..]}");
     }

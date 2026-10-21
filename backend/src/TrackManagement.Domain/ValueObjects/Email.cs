@@ -15,15 +15,15 @@ public sealed partial record Email
     public static Email Create(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new BusinessRuleViolationException("Email is required.");
+            throw new DomainException("Email is required.");
 
         var normalized = value.Trim().ToLowerInvariant();
 
         if (normalized.Length > MaxLength)
-            throw new BusinessRuleViolationException($"Email must be at most {MaxLength} characters.");
+            throw new DomainException($"Email must be at most {MaxLength} characters.");
 
         if (!Pattern().IsMatch(normalized))
-            throw new BusinessRuleViolationException($"'{value}' is not a valid email address.");
+            throw new DomainException($"'{value}' is not a valid email address.");
 
         return new Email(normalized);
     }

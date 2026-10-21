@@ -1,7 +1,6 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
-using TrackManagement.Domain.Artists;
-using TrackManagement.Domain.Tracks;
+using TrackManagement.Application.Artists;
 
 namespace TrackManagement.Application;
 
@@ -11,9 +10,7 @@ public static class DependencyInjection
     {
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
-        // Domain managers are registered here because Domain has no DI dependency.
-        services.AddScoped<ArtistManager>();
-        services.AddScoped<TrackManager>();
+        services.AddScoped<IArtistAppService, ArtistAppService>();
 
         return services;
     }

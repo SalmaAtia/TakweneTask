@@ -13,7 +13,7 @@ public abstract class Entity : IEquatable<Entity>
     protected Entity(Guid id)
     {
         if (id == Guid.Empty)
-            throw new BusinessRuleViolationException("Id must not be empty.");
+            throw new DomainException("Id must not be empty.");
 
         Id = id;
     }

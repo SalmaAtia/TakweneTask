@@ -1,9 +1,9 @@
 namespace TrackManagement.Domain.Common.Exceptions;
 
-/// <summary>Base type for every exception raised by the domain.</summary>
-public abstract class DomainException : Exception
+/// <summary>A domain rule was violated (invalid value or operation not allowed in the current state).</summary>
+public class DomainException : Exception
 {
-    protected DomainException(string message) : base(message)
+    public DomainException(string message) : base(message)
     {
     }
 }

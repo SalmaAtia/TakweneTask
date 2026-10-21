@@ -12,5 +12,5 @@ public interface IArtistRepository
 
     Task<bool> EmailExistsAsync(Email email, CancellationToken cancellationToken = default);
 
-    void Add(Artist artist);
+    Task AddAsync(Artist artist, CancellationToken cancellationToken = default);
 }

@@ -20,7 +20,7 @@ public sealed class TrackDistribution : Entity
     internal TrackDistribution(Guid trackId, Guid dspId, DateTimeOffset submittedAtUtc) : base(Guid.NewGuid())
     {
         if (submittedAtUtc.Offset != TimeSpan.Zero)
-            throw new BusinessRuleViolationException("SubmittedAt must be in UTC.");
+            throw new DomainException("SubmittedAt must be in UTC.");
 
         TrackId = Guard.RequiredId(trackId, "Track id");
         DspId = Guard.RequiredId(dspId, "DSP id");

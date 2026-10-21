@@ -52,7 +52,7 @@ public sealed class Track : Entity, IAggregateRoot
     public TrackDistribution DistributeTo(Guid dspId, DateTimeOffset submittedAtUtc)
     {
         if (_distributions.Any(d => d.DspId == dspId))
-            throw new BusinessRuleViolationException("Track has already been distributed to this DSP.");
+            throw new DomainException("Track has already been distributed to this DSP.");
 
         var distribution = new TrackDistribution(Id, dspId, submittedAtUtc);
         _distributions.Add(distribution);
@@ -64,10 +64,10 @@ public sealed class Track : Entity, IAggregateRoot
     public void ChangeStatus(TrackStatus newStatus)
     {
         if (!Enum.IsDefined(newStatus))
-            throw new BusinessRuleViolationException($"Unknown track status '{newStatus}'.");
+            throw new DomainException($"Unknown track status '{newStatus}'.");
 
         if (newStatus != Status + 1)
-            throw new BusinessRuleViolationException($"Cannot change track status from {Status} to {newStatus}.");
+            throw new DomainException($"Cannot change track status from {Status} to {newStatus}.");
 
         Status = newStatus;
     }

@@ -9,10 +9,10 @@ internal static class Guard
         var trimmed = value?.Trim();
 
         if (string.IsNullOrEmpty(trimmed))
-            throw new BusinessRuleViolationException($"{name} is required.");
+            throw new DomainException($"{name} is required.");
 
         if (trimmed.Length > maxLength)
-            throw new BusinessRuleViolationException($"{name} must be at most {maxLength} characters.");
+            throw new DomainException($"{name} must be at most {maxLength} characters.");
 
         return trimmed;
     }
@@ -20,7 +20,7 @@ internal static class Guard
     public static Guid RequiredId(Guid value, string name)
     {
         if (value == Guid.Empty)
-            throw new BusinessRuleViolationException($"{name} is required.");
+            throw new DomainException($"{name} is required.");
 
         return value;
     }
