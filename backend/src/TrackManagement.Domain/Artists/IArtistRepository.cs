@@ -8,6 +8,8 @@ public interface IArtistRepository
 
     Task<IReadOnlyList<Artist>> GetAllAsync(CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Artist>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
+
     Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<bool> EmailExistsAsync(Email email, CancellationToken cancellationToken = default);

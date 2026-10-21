@@ -17,10 +17,7 @@ public sealed class ArtistsController : ControllerBase
     }
 
     [HttpPost]
-    [ProducesResponseType<ArtistDto>(StatusCodes.Status201Created)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<ActionResult<ArtistDto>> Create(CreateArtistDto input, CancellationToken cancellationToken)
     {
         var artist = await _artistAppService.CreateAsync(input, cancellationToken);
@@ -29,13 +26,10 @@ public sealed class ArtistsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [ProducesResponseType<ArtistDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ArtistDto>> GetById(Guid id, CancellationToken cancellationToken) =>
         await _artistAppService.GetAsync(id, cancellationToken);
 
     [HttpGet]
-    [ProducesResponseType<IReadOnlyList<ArtistDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<ArtistDto>>> GetList(CancellationToken cancellationToken) =>
         Ok(await _artistAppService.GetListAsync(cancellationToken));
 }

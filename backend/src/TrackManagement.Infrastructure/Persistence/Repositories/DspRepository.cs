@@ -18,6 +18,18 @@ internal sealed class DspRepository : IDspRepository
     public async Task<IReadOnlyList<Dsp>> GetAllAsync(CancellationToken cancellationToken = default) =>
         await _db.Dsps.AsNoTracking().OrderBy(d => d.Name).ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<Dsp>> GetByIdsAsync(
+        IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+            return [];
+
+        return await _db.Dsps
+            .AsNoTracking()
+            .Where(x => ids.Contains(x.Id))
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.Dsps.AnyAsync(d => d.Id == id, cancellationToken);
 

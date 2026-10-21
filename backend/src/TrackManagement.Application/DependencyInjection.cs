@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using TrackManagement.Application.Artists;
+using TrackManagement.Application.Tracks;
 
 namespace TrackManagement.Application;
 
@@ -11,6 +12,7 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
         services.AddScoped<IArtistAppService, ArtistAppService>();
+        services.AddScoped<ITrackAppService, TrackAppService>();
 
         return services;
     }

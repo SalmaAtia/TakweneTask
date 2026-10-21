@@ -19,8 +19,10 @@ Full-stack take-home: .NET Web API (Clean Architecture) + Angular SPA.
 - All dates UTC (DateTime with Kind Utc / DateTimeOffset); release_date is DateOnly.
 - Controllers are thin: no business logic, no DbContext access. Use Application services.
 - Never expose entities from the API. Use request/response DTOs.
+- Controller attributes: no [ProducesResponseType] for errors (all errors share the ProblemDetails shape documented below). Only add [ProducesResponseType(StatusCodes.Status201Created)] (or another non-200 success code) where Swagger can't infer it from ActionResult<T>.
 - Validation: FluentValidation. Errors returned as RFC 7807 ProblemDetails.
 - Async all the way, pass CancellationToken.
+- Reads: repositories use AsNoTracking for read paths. Load related aggregates in one batched call (GetByIdsAsync) and map in memory; never query per item (no N+1). Skip the batch call when the id list is empty.
 - Constructor injection uses classic constructors assigning `private readonly` fields (`_camelCase`). No C# 12 primary constructors on classes. Positional records are fine for DTOs.
 - No secrets in committed appsettings.json; use appsettings.Development.json (gitignored) or user-secrets.
 
