@@ -27,4 +27,22 @@ public sealed class TrackDistribution : Entity
         SubmittedAt = submittedAtUtc;
         Status = DistributionStatus.Pending;
     }
+
+    internal void MarkLive()
+    {
+        EnsurePending();
+        Status = DistributionStatus.Live;
+    }
+
+    internal void MarkRejected()
+    {
+        EnsurePending();
+        Status = DistributionStatus.Rejected;
+    }
+
+    private void EnsurePending()
+    {
+        if (Status != DistributionStatus.Pending)
+            throw new ConflictException($"Distribution to DSP '{DspId}' is already {Status}.");
+    }
 }

@@ -19,6 +19,11 @@ internal sealed class TrackRepository : ITrackRepository
             .Include(t => t.Distributions)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
+    public Task<Track?> GetForUpdateAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.Tracks
+            .Include(t => t.Distributions)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+
     public async Task<IReadOnlyList<Track>> GetListAsync(TrackFilter filter, CancellationToken cancellationToken = default)
     {
         var query = _db.Tracks.AsNoTracking();

@@ -6,4 +6,8 @@ public sealed class NotFoundException : DomainException
         : base($"{entityName} '{key}' was not found.")
     {
     }
+
+    public NotFoundException(string message) : base(message)
+    {
+    }
 }

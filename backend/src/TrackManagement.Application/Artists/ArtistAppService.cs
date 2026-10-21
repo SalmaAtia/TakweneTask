@@ -36,7 +36,6 @@ public sealed class ArtistAppService : IArtistAppService
             CountryCode.Create(input.Country),
             cancellationToken);
 
-        await _artists.AddAsync(artist, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return artist.ToDto();

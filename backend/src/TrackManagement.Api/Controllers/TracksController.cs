@@ -36,4 +36,14 @@ public sealed class TracksController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TrackDetailDto>> GetById(Guid id, CancellationToken cancellationToken) =>
         await _trackAppService.GetAsync(id, cancellationToken);
+
+    [HttpPost("{id:guid}/distribute")]
+    public async Task<ActionResult<TrackDetailDto>> Distribute(
+        Guid id, DistributeTrackDto input, CancellationToken cancellationToken) =>
+        await _trackAppService.DistributeAsync(id, input, cancellationToken);
+
+    [HttpPatch("{id:guid}/status")]
+    public async Task<ActionResult<TrackDetailDto>> ChangeStatus(
+        Guid id, ChangeTrackStatusDto input, CancellationToken cancellationToken) =>
+        await _trackAppService.ChangeStatusAsync(id, input, cancellationToken);
 }

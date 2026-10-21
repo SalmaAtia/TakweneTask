@@ -18,7 +18,10 @@ public sealed class ArtistManager
     {
         await EnsureEmailIsUniqueAsync(email, cancellationToken);
 
-        return Artist.Create(name, email, country);
+        var artist = Artist.Create(name, email, country);
+        await _artists.AddAsync(artist, cancellationToken);
+
+        return artist;
     }
 
     public async Task ChangeEmailAsync(Artist artist, Email email, CancellationToken cancellationToken = default)

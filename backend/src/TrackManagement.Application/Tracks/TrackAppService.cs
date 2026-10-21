@@ -15,28 +15,37 @@ public sealed class TrackAppService : ITrackAppService
 
     private readonly IValidator<CreateTrackDto> _createValidator;
     private readonly IValidator<TrackListQueryDto> _listQueryValidator;
+    private readonly IValidator<DistributeTrackDto> _distributeValidator;
+    private readonly IValidator<ChangeTrackStatusDto> _changeStatusValidator;
     private readonly TrackManager _trackManager;
     private readonly ITrackRepository _tracks;
     private readonly IArtistRepository _artists;
     private readonly IDspRepository _dsps;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _timeProvider;
 
     public TrackAppService(
         IValidator<CreateTrackDto> createValidator,
         IValidator<TrackListQueryDto> listQueryValidator,
+        IValidator<DistributeTrackDto> distributeValidator,
+        IValidator<ChangeTrackStatusDto> changeStatusValidator,
         TrackManager trackManager,
         ITrackRepository tracks,
         IArtistRepository artists,
         IDspRepository dsps,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        TimeProvider timeProvider)
     {
         _createValidator = createValidator;
         _listQueryValidator = listQueryValidator;
+        _distributeValidator = distributeValidator;
+        _changeStatusValidator = changeStatusValidator;
         _trackManager = trackManager;
         _tracks = tracks;
         _artists = artists;
         _dsps = dsps;
         _unitOfWork = unitOfWork;
+        _timeProvider = timeProvider;
     }
 
     public async Task<TrackDetailDto> CreateAsync(CreateTrackDto input, CancellationToken cancellationToken = default)
@@ -51,7 +60,6 @@ public sealed class TrackAppService : ITrackAppService
             input.Genre,
             cancellationToken);
 
-        await _tracks.AddAsync(track, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // A new track is a Draft with no distributions, so there are no DSP names to load.
@@ -63,10 +71,7 @@ public sealed class TrackAppService : ITrackAppService
         var track = await _tracks.GetWithDistributionsAsync(id, cancellationToken)
             ?? throw new NotFoundException(nameof(Track), id);
 
-        var dspIds = track.Distributions.Select(d => d.DspId).Distinct().ToList();
-        var dsps = await _dsps.GetByIdsAsync(dspIds, cancellationToken);
-
-        return track.ToDetailDto(dsps.ToDictionary(d => d.Id, d => d.Name));
+        return await ToDetailDtoAsync(track, cancellationToken);
     }
 
     public async Task<IReadOnlyList<TrackListItemDto>> GetListAsync(
@@ -77,7 +82,7 @@ public sealed class TrackAppService : ITrackAppService
         var filter = new TrackFilter(
             query.ArtistId,
             query.Genre,
-            query.Status is null ? null : Enum.Parse<TrackStatus>(query.Status, ignoreCase: true));
+            query.Status is null ? null : TrackStatusNames.Parse(query.Status));
 
         var tracks = await _tracks.GetListAsync(filter, cancellationToken);
 
@@ -87,5 +92,45 @@ public sealed class TrackAppService : ITrackAppService
         var artistNames = artists.ToDictionary(a => a.Id, a => a.Name);
 
         return tracks.Select(t => t.ToListItemDto(artistNames[t.ArtistId])).ToList();
+    }
+
+    public async Task<TrackDetailDto> DistributeAsync(
+        Guid id, DistributeTrackDto input, CancellationToken cancellationToken = default)
+    {
+        await _distributeValidator.ValidateAndThrowAsync(input, cancellationToken);
+
+        var track = await GetForUpdateAsync(id, cancellationToken);
+
+        await _trackManager.DistributeAsync(
+            track, input.DspIds, _timeProvider.GetUtcNow().UtcDateTime, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return await ToDetailDtoAsync(track, cancellationToken);
+    }
+
+    public async Task<TrackDetailDto> ChangeStatusAsync(
+        Guid id, ChangeTrackStatusDto input, CancellationToken cancellationToken = default)
+    {
+        await _changeStatusValidator.ValidateAndThrowAsync(input, cancellationToken);
+
+        var track = await GetForUpdateAsync(id, cancellationToken);
+
+        track.ChangeStatus(TrackStatusNames.Parse(input.Status));
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return await ToDetailDtoAsync(track, cancellationToken);
+    }
+
+    private async Task<Track> GetForUpdateAsync(Guid id, CancellationToken cancellationToken) =>
+        await _tracks.GetForUpdateAsync(id, cancellationToken)
+        ?? throw new NotFoundException(nameof(Track), id);
+
+    // One batched lookup for the names of every DSP the track is distributed to.
+    private async Task<TrackDetailDto> ToDetailDtoAsync(Track track, CancellationToken cancellationToken)
+    {
+        var dspIds = track.Distributions.Select(d => d.DspId).Distinct().ToList();
+        var dsps = await _dsps.GetByIdsAsync(dspIds, cancellationToken);
+
+        return track.ToDetailDto(dsps.ToDictionary(d => d.Id, d => d.Name));
     }
 }

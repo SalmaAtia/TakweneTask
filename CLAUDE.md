@@ -23,6 +23,8 @@ Full-stack take-home: .NET Web API (Clean Architecture) + Angular SPA.
 - Validation: FluentValidation. Errors returned as RFC 7807 ProblemDetails.
 - Async all the way, pass CancellationToken.
 - Reads: repositories use AsNoTracking for read paths. Load related aggregates in one batched call (GetByIdsAsync) and map in memory; never query per item (no N+1). Skip the batch call when the id list is empty.
+- Writes: load the aggregate tracked (e.g. ITrackRepository.GetForUpdateAsync), call domain/manager methods, then SaveChangesAsync once per request.
+- Time: inject TimeProvider in Application and pass UTC timestamps into the domain. Never call DateTime.UtcNow / DateTimeOffset.UtcNow in Domain.
 - Constructor injection uses classic constructors assigning `private readonly` fields (`_camelCase`). No C# 12 primary constructors on classes. Positional records are fine for DTOs.
 - No secrets in committed appsettings.json; use appsettings.Development.json (gitignored) or user-secrets.
 
@@ -43,10 +45,11 @@ Full-stack take-home: .NET Web API (Clean Architecture) + Angular SPA.
   - Isrc canonical form CC-XXX-YY-NNNNN (uppercase, stored as char(15)); input accepted with or without hyphens.
 - Repositories exist only for aggregate roots (none for TrackDistribution). Interfaces live in Domain.
 - TrackDistribution is created only through Track (internal ctor, private list exposed as IReadOnlyCollection).
-- Domain managers (ArtistManager, TrackManager) hold only rules that need repositories (artist exists, ISRC unique, email unique). Single-aggregate rules stay on the entity. Managers don't save; application services commit via IUnitOfWork.
+- Domain managers (ArtistManager, TrackManager) hold only rules that need repositories (artist exists, ISRC unique, email unique). Single-aggregate rules stay on the entity. A manager's CreateAsync builds the aggregate and registers it via the repository's AddAsync. Managers never call SaveChangesAsync; application services commit once via IUnitOfWork.
+- Managers do not wrap reads or loading. Application services use repositories directly for queries, batch lookups (GetByIdsAsync) and loading aggregates for update (GetForUpdateAsync).
   - Factories/methods guarded by a manager are `internal` (Artist.Create, Artist.ChangeEmail, Track.Create) so callers must go through the manager.
   - Dsp name uniqueness: unique index + IDspRepository.NameExistsAsync check in the application service (no DspManager).
-- Exceptions (Domain/Common/Exceptions): only three — DomainException (any rule/value violation), NotFoundException, ConflictException (both derive from DomainException). Don't add a type per situation; put specifics in the message. Don't use BCL exceptions (ArgumentException etc.) for expected failures: those must stay 500s.
+- Exceptions (Domain/Common/Exceptions): only three — DomainException (any rule/value violation), NotFoundException, ConflictException (both derive from DomainException). Don't add a type per situation; put specifics in the message. Use ConflictException (409) when the resource's current state forbids the operation (invalid status transition, already distributed, DSP already present, distribution not Pending); plain DomainException (422) when the input itself is invalid. Don't use BCL exceptions (ArgumentException etc.) for expected failures: those must stay 500s.
 - HTTP mapping (Api/ExceptionHandling/GlobalExceptionHandler, kept minimal): FluentValidation ValidationException → 400 ValidationProblemDetails (camelCase keys); NotFoundException → 404; ConflictException and unique-index DbUpdateException → 409; any other DomainException → 422. Everything else is left to the built-in exception handler (500 ProblemDetails, no details). The built-in middleware logs handled exceptions at Error too; accepted noise on .NET 8.
 - FluentValidation checks request shape only; value objects/entities still enforce the rules. MVC's implicit [Required] for non-nullable refs is disabled so FluentValidation owns all 400s for DTO fields.
 - Domain project has no reference to EF Core or any NuGet package except Microsoft.Extensions.DependencyInjection.Abstractions (for AddDomain).

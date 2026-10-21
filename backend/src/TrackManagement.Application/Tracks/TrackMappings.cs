@@ -26,7 +26,8 @@ internal static class TrackMappings
             track.Genre,
             track.Status.ToString(),
             track.Distributions
-                .OrderBy(d => d.SubmittedAt)
                 .Select(d => new TrackDistributionDto(d.DspId, dspNames[d.DspId], d.Status.ToString(), d.SubmittedAt))
+                .OrderBy(d => d.SubmittedAt)
+                .ThenBy(d => d.DspName)
                 .ToList());
 }

@@ -9,6 +9,13 @@ public sealed class Track : Entity, IAggregateRoot
     public const int TitleMaxLength = 200;
     public const int GenreMaxLength = 50;
 
+    private static readonly HashSet<(TrackStatus From, TrackStatus To)> AllowedTransitions =
+    [
+        (TrackStatus.Draft, TrackStatus.Submitted),
+        (TrackStatus.Submitted, TrackStatus.Distributed),
+        (TrackStatus.Submitted, TrackStatus.Draft),
+    ];
+
     private readonly List<TrackDistribution> _distributions = [];
 
     public string Title { get; private set; } = null!;
@@ -48,27 +55,61 @@ public sealed class Track : Entity, IAggregateRoot
             Guard.RequiredText(genre, "Genre", GenreMaxLength));
     }
 
-    // Stub: full distribution rules (e.g. allowed track statuses) come in a later commit.
-    public TrackDistribution DistributeTo(Guid dspId, DateTimeOffset submittedAtUtc)
+    /// <summary>
+    /// Submits the track to new DSPs as Pending distributions. All-or-nothing: if any DSP is
+    /// already present the whole call is rejected and nothing is added. Draft moves to Submitted.
+    /// </summary>
+    public void DistributeTo(IReadOnlyCollection<Guid> dspIds, DateTime utcNow)
     {
-        if (_distributions.Any(d => d.DspId == dspId))
-            throw new DomainException("Track has already been distributed to this DSP.");
+        ArgumentNullException.ThrowIfNull(dspIds);
 
-        var distribution = new TrackDistribution(Id, dspId, submittedAtUtc);
-        _distributions.Add(distribution);
+        if (dspIds.Count == 0)
+            throw new DomainException("At least one DSP is required.");
 
-        return distribution;
+        if (dspIds.Contains(Guid.Empty))
+            throw new DomainException("DSP id must not be empty.");
+
+        if (dspIds.Distinct().Count() != dspIds.Count)
+            throw new DomainException("DSP ids must be unique.");
+
+        if (utcNow.Kind != DateTimeKind.Utc)
+            throw new DomainException("The distribution timestamp must be in UTC.");
+
+        if (Status == TrackStatus.Distributed)
+            throw new ConflictException("Track is already distributed.");
+
+        var alreadyDistributed = dspIds.Where(id => _distributions.Any(d => d.DspId == id)).ToList();
+        if (alreadyDistributed.Count > 0)
+            throw new ConflictException(
+                $"Track has already been distributed to DSP(s): {string.Join(", ", alreadyDistributed)}.");
+
+        var submittedAt = new DateTimeOffset(utcNow);
+        foreach (var dspId in dspIds)
+            _distributions.Add(new TrackDistribution(Id, dspId, submittedAt));
+
+        if (Status == TrackStatus.Draft)
+            Status = TrackStatus.Submitted;
     }
 
-    // Stub: forward-only, one step at a time (Draft -> Submitted -> Distributed).
     public void ChangeStatus(TrackStatus newStatus)
     {
         if (!Enum.IsDefined(newStatus))
             throw new DomainException($"Unknown track status '{newStatus}'.");
 
-        if (newStatus != Status + 1)
-            throw new DomainException($"Cannot change track status from {Status} to {newStatus}.");
+        if (!AllowedTransitions.Contains((Status, newStatus)))
+            throw new ConflictException($"Cannot change track status from {Status} to {newStatus}.");
+
+        if (newStatus == TrackStatus.Distributed && !_distributions.Any(d => d.Status == DistributionStatus.Live))
+            throw new ConflictException("A track can only become Distributed once at least one distribution is Live.");
 
         Status = newStatus;
     }
+
+    public void MarkDistributionLive(Guid dspId) => GetDistribution(dspId).MarkLive();
+
+    public void MarkDistributionRejected(Guid dspId) => GetDistribution(dspId).MarkRejected();
+
+    private TrackDistribution GetDistribution(Guid dspId) =>
+        _distributions.SingleOrDefault(d => d.DspId == dspId)
+        ?? throw new NotFoundException($"Track has not been distributed to DSP '{dspId}'.");
 }

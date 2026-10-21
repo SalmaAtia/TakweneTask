@@ -9,4 +9,8 @@ public interface ITrackAppService
     Task<TrackDetailDto> GetAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<TrackListItemDto>> GetListAsync(TrackListQueryDto query, CancellationToken cancellationToken = default);
+
+    Task<TrackDetailDto> DistributeAsync(Guid id, DistributeTrackDto input, CancellationToken cancellationToken = default);
+
+    Task<TrackDetailDto> ChangeStatusAsync(Guid id, ChangeTrackStatusDto input, CancellationToken cancellationToken = default);
 }
