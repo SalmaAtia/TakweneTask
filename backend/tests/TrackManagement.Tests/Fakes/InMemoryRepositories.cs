@@ -7,6 +7,7 @@ namespace TrackManagement.Tests.Fakes;
 
 // Minimal in-memory fakes of the repository interfaces for domain manager tests.
 // Only the members the managers use do real work; the rest aren't needed and throw.
+// Tracked vs. untracked loading makes no difference in memory.
 
 internal sealed class InMemoryTrackRepository : ITrackRepository
 {
@@ -22,10 +23,10 @@ internal sealed class InMemoryTrackRepository : ITrackRepository
     }
 
     public Task<Track?> GetWithDistributionsAsync(Guid id, CancellationToken cancellationToken = default) =>
-        throw new NotSupportedException();
+        Task.FromResult(Items.SingleOrDefault(t => t.Id == id));
 
     public Task<Track?> GetForUpdateAsync(Guid id, CancellationToken cancellationToken = default) =>
-        throw new NotSupportedException();
+        Task.FromResult(Items.SingleOrDefault(t => t.Id == id));
 
     public Task<IReadOnlyList<Track>> GetListAsync(TrackFilter filter, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException();
@@ -50,7 +51,7 @@ internal sealed class InMemoryArtistRepository : IArtistRepository
     }
 
     public Task<Artist?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        throw new NotSupportedException();
+        Task.FromResult(Items.SingleOrDefault(a => a.Id == id));
 
     public Task<IReadOnlyList<Artist>> GetAllAsync(CancellationToken cancellationToken = default) =>
         throw new NotSupportedException();

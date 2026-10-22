@@ -5,7 +5,10 @@ using TrackManagement.Domain.ValueObjects;
 
 namespace TrackManagement.Domain.Tracks;
 
-/// <summary>Track rules that need repositories (artist exists, ISRC uniqueness, DSPs exist).</summary>
+/// <summary>
+/// Entry point for the Track aggregate: application services use this instead of <see cref="ITrackRepository"/>.
+/// Holds the rules that need repositories (artist exists, ISRC uniqueness, DSPs exist) and the reads services need.
+/// </summary>
 public sealed class TrackManager
 {
     private readonly ITrackRepository _tracks;
@@ -18,6 +21,20 @@ public sealed class TrackManager
         _artists = artists;
         _dsps = dsps;
     }
+
+    /// <summary>The full aggregate, including distributions, for reading (not tracked).</summary>
+    public async Task<Track> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
+        await _tracks.GetWithDistributionsAsync(id, cancellationToken)
+        ?? throw new NotFoundException(nameof(Track), id);
+
+    /// <summary>The full aggregate, tracked so changes made through its methods are saved.</summary>
+    public async Task<Track> GetForUpdateAsync(Guid id, CancellationToken cancellationToken = default) =>
+        await _tracks.GetForUpdateAsync(id, cancellationToken)
+        ?? throw new NotFoundException(nameof(Track), id);
+
+    /// <summary>Tracks matching the filter, without distributions.</summary>
+    public Task<IReadOnlyList<Track>> GetListAsync(TrackFilter filter, CancellationToken cancellationToken = default) =>
+        _tracks.GetListAsync(filter, cancellationToken);
 
     public async Task<Track> CreateAsync(
         string title,

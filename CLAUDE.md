@@ -23,7 +23,7 @@ Full-stack take-home: .NET Web API (Clean Architecture) + Angular SPA.
 - Validation: FluentValidation. Errors returned as RFC 7807 ProblemDetails.
 - Async all the way, pass CancellationToken.
 - Reads: repositories use AsNoTracking for read paths. Load related aggregates in one batched call (GetByIdsAsync) and map in memory; never query per item (no N+1). Skip the batch call when the id list is empty.
-- Writes: load the aggregate tracked (e.g. ITrackRepository.GetForUpdateAsync), call domain/manager methods, then SaveChangesAsync once per request.
+- Writes: load the aggregate tracked (e.g. TrackManager.GetForUpdateAsync), call domain/manager methods, then SaveChangesAsync once per request.
 - Time: inject TimeProvider in Application and pass UTC timestamps into the domain. Never call DateTime.UtcNow / DateTimeOffset.UtcNow in Domain.
 - Constructor injection uses classic constructors assigning `private readonly` fields (`_camelCase`). No C# 12 primary constructors on classes. Positional records are fine for DTOs.
 - No secrets in committed appsettings.json; use appsettings.Development.json (gitignored) or user-secrets.
@@ -45,8 +45,8 @@ Full-stack take-home: .NET Web API (Clean Architecture) + Angular SPA.
   - Isrc canonical form CC-XXX-YY-NNNNN (uppercase, stored as char(15)); input accepted with or without hyphens.
 - Repositories exist only for aggregate roots (none for TrackDistribution). Interfaces live in Domain.
 - TrackDistribution is created only through Track (internal ctor, private list exposed as IReadOnlyCollection).
-- Domain managers (ArtistManager, TrackManager) hold only rules that need repositories (artist exists, ISRC unique, email unique). Single-aggregate rules stay on the entity. A manager's CreateAsync builds the aggregate and registers it via the repository's AddAsync. Managers never call SaveChangesAsync; application services commit once via IUnitOfWork.
-- Managers do not wrap reads or loading. Application services use repositories directly for queries, batch lookups (GetByIdsAsync) and loading aggregates for update (GetForUpdateAsync).
+- Domain managers (ArtistManager, TrackManager) hold the rules that need repositories (artist exists, ISRC unique, email unique) and are the application layer's only way into their aggregate. Single-aggregate rules stay on the entity. A manager's CreateAsync builds the aggregate and registers it via the repository's AddAsync. Managers never call SaveChangesAsync; application services commit once via IUnitOfWork.
+- An application service never injects both a manager and the repository of the same aggregate. If an aggregate has a manager, services use only the manager, for writes and reads alike (GetAsync / GetForUpdateAsync throw NotFoundException; GetListAsync, GetByIdsAsync). Repositories are injected directly only for aggregates without a manager (Dsp).
   - Factories/methods guarded by a manager are `internal` (Artist.Create, Artist.ChangeEmail, Track.Create) so callers must go through the manager.
   - Dsp name uniqueness: unique index + IDspRepository.NameExistsAsync check in the application service (no DspManager).
 - Exceptions (Domain/Common/Exceptions): only three — DomainException (any rule/value violation), NotFoundException, ConflictException (both derive from DomainException). Don't add a type per situation; put specifics in the message. Use ConflictException (409) when the resource's current state forbids the operation (invalid status transition, already distributed, DSP already present, distribution not Pending); plain DomainException (422) when the input itself is invalid. Don't use BCL exceptions (ArgumentException etc.) for expected failures: those must stay 500s.

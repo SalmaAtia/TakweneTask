@@ -84,6 +84,22 @@ public sealed class TrackManagerTests
         Assert.Equal(TrackStatus.Draft, track.Status);
     }
 
+    [Fact]
+    public async Task GetAsync_and_GetForUpdateAsync_return_the_track()
+    {
+        var track = await NewTrackAsync();
+
+        Assert.Same(track, await _manager.GetAsync(track.Id));
+        Assert.Same(track, await _manager.GetForUpdateAsync(track.Id));
+    }
+
+    [Fact]
+    public async Task GetAsync_and_GetForUpdateAsync_throw_not_found_for_an_unknown_track()
+    {
+        await Assert.ThrowsAsync<NotFoundException>(() => _manager.GetAsync(Guid.NewGuid()));
+        await Assert.ThrowsAsync<NotFoundException>(() => _manager.GetForUpdateAsync(Guid.NewGuid()));
+    }
+
     private Task<Track> NewTrackAsync() =>
         _manager.CreateAsync("Shobra Nights", _artist.Id, Isrc.Create("EG-NES-25-00001"), ReleaseDate, "Mahraganat");
 }

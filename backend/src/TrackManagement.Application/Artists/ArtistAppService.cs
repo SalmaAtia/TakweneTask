@@ -2,7 +2,6 @@ using FluentValidation;
 using TrackManagement.Application.Artists.Dtos;
 using TrackManagement.Domain.Artists;
 using TrackManagement.Domain.Common;
-using TrackManagement.Domain.Common.Exceptions;
 using TrackManagement.Domain.ValueObjects;
 
 namespace TrackManagement.Application.Artists;
@@ -11,18 +10,15 @@ public sealed class ArtistAppService : IArtistAppService
 {
     private readonly IValidator<CreateArtistDto> _createValidator;
     private readonly ArtistManager _artistManager;
-    private readonly IArtistRepository _artists;
     private readonly IUnitOfWork _unitOfWork;
 
     public ArtistAppService(
         IValidator<CreateArtistDto> createValidator,
         ArtistManager artistManager,
-        IArtistRepository artists,
         IUnitOfWork unitOfWork)
     {
         _createValidator = createValidator;
         _artistManager = artistManager;
-        _artists = artists;
         _unitOfWork = unitOfWork;
     }
 
@@ -43,15 +39,14 @@ public sealed class ArtistAppService : IArtistAppService
 
     public async Task<ArtistDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var artist = await _artists.GetByIdAsync(id, cancellationToken)
-            ?? throw new NotFoundException(nameof(Artist), id);
+        var artist = await _artistManager.GetAsync(id, cancellationToken);
 
         return artist.ToDto();
     }
 
     public async Task<IReadOnlyList<ArtistDto>> GetListAsync(CancellationToken cancellationToken = default)
     {
-        var list = await _artists.GetAllAsync(cancellationToken);
+        var list = await _artistManager.GetListAsync(cancellationToken);
 
         return list.Select(a => a.ToDto()).ToList();
     }

@@ -1,3 +1,5 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -5,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.MsSql;
 using TrackManagement.Api.Auth;
+using TrackManagement.Api.Auth.Dtos;
 using TrackManagement.Infrastructure.Persistence;
 
 namespace TrackManagement.Tests.Integration;
@@ -35,6 +38,19 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         await base.DisposeAsync();
         await _sqlServer.DisposeAsync();
+    }
+
+    /// <summary>A client carrying a bearer token from a real POST /api/auth/login.</summary>
+    public async Task<HttpClient> CreateAuthenticatedClientAsync()
+    {
+        var client = CreateClient();
+
+        var login = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(Username, Password));
+        login.EnsureSuccessStatusCode();
+        var token = await login.Content.ReadFromJsonAsync<LoginResponse>();
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token!.AccessToken);
+        return client;
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

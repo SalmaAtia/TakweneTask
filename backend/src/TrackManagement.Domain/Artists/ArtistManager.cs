@@ -3,7 +3,10 @@ using TrackManagement.Domain.ValueObjects;
 
 namespace TrackManagement.Domain.Artists;
 
-/// <summary>Artist rules that need a repository (email uniqueness).</summary>
+/// <summary>
+/// Entry point for the Artist aggregate: application services use this instead of <see cref="IArtistRepository"/>.
+/// Holds the rules that need a repository (email uniqueness) and the reads services need.
+/// </summary>
 public sealed class ArtistManager
 {
     private readonly IArtistRepository _artists;
@@ -12,6 +15,18 @@ public sealed class ArtistManager
     {
         _artists = artists;
     }
+
+    public async Task<Artist> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
+        await _artists.GetByIdAsync(id, cancellationToken)
+        ?? throw new NotFoundException(nameof(Artist), id);
+
+    public Task<IReadOnlyList<Artist>> GetListAsync(CancellationToken cancellationToken = default) =>
+        _artists.GetAllAsync(cancellationToken);
+
+    /// <summary>One batched lookup; unknown ids are simply absent from the result.</summary>
+    public Task<IReadOnlyList<Artist>> GetByIdsAsync(
+        IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default) =>
+        _artists.GetByIdsAsync(ids, cancellationToken);
 
     public async Task<Artist> CreateAsync(
         string name, Email email, CountryCode country, CancellationToken cancellationToken = default)
