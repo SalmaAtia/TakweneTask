@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using TrackManagement.Application.Artists.Dtos;
+using TrackManagement.Application.Dsps.Dtos;
 using TrackManagement.Application.Tracks.Dtos;
 
 namespace TrackManagement.Tests.Integration;
@@ -77,6 +78,17 @@ public sealed class CatalogFlowApiTests
         var toDraft = await client.PatchAsJsonAsync($"/api/tracks/{track.Id}/status", new ChangeTrackStatusDto("Draft"));
         Assert.Equal(HttpStatusCode.OK, toDraft.StatusCode);
         Assert.Equal("Draft", (await client.GetFromJsonAsync<TrackDetailDto>($"/api/tracks/{track.Id}"))!.Status);
+    }
+
+    [Fact]
+    public async Task Get_dsps_returns_the_seeded_dsps_sorted_by_name()
+    {
+        var client = _factory.CreateClient();
+
+        var dsps = await client.GetFromJsonAsync<List<DspDto>>("/api/dsps");
+
+        Assert.Equal(["Apple Music", "Spotify", "YouTube Music"], dsps!.Select(d => d.Name));
+        Assert.Contains(dsps!, d => d.Id == Spotify);
     }
 
     [Theory]

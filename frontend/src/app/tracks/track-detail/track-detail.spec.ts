@@ -41,6 +41,7 @@ describe('TrackDetail', () => {
   let backend: HttpTestingController;
 
   beforeEach(async () => {
+    sessionStorage.clear();
     TestBed.configureTestingModule({
       providers: [
         provideRouter(
@@ -166,5 +167,52 @@ describe('TrackDetail', () => {
     await load('/tracks/t1', ok(track));
 
     expect(el().querySelector('a')!.getAttribute('href')).toBe('/');
+  });
+
+  describe('actions', () => {
+    const logIn = () =>
+      sessionStorage.setItem(
+        'trackManagement.auth',
+        JSON.stringify({
+          accessToken: 'jwt',
+          expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        }),
+      );
+
+    it('are hidden when logged out, with a login link that returns here', async () => {
+      await load('/tracks/t1?status=Submitted', ok(track));
+
+      expect(el().querySelector('app-distribute-form')).toBeNull();
+      expect(el().querySelector('app-change-status-form')).toBeNull();
+      const login = el().querySelector<HTMLAnchorElement>('a[href^="/login"]')!;
+      expect(new URL(login.href).searchParams.get('returnUrl')).toBe('/tracks/t1?status=Submitted');
+    });
+
+    it('are shown when logged in, and a successful action replaces the shown track', async () => {
+      logIn();
+      await harness.navigateByUrl('/tracks/t1');
+      backend.expectOne(trackUrl('t1')).flush(track);
+      // Rendering the actions loads the DSP list; answer it before waiting for stability.
+      (await vi.waitFor(() => backend.expectOne(`${environment.apiBaseUrl}/dsps`))).flush([
+        { id: 'd3', name: 'YouTube Music' },
+      ]);
+      await harness.fixture.whenStable();
+
+      expect(el().querySelector('app-distribute-form')).not.toBeNull();
+      expect(el().querySelector('app-change-status-form')).not.toBeNull();
+
+      const select = el().querySelector<HTMLSelectElement>('app-change-status-form select')!;
+      select.value = 'Draft';
+      select.dispatchEvent(new Event('change'));
+      await harness.fixture.whenStable();
+      el().querySelector('app-change-status-form form')!.dispatchEvent(new Event('submit'));
+      backend.expectOne(`${trackUrl('t1')}/status`).flush({ ...track, status: 'Draft' });
+      await harness.fixture.whenStable();
+
+      const status = Array.from(el().querySelectorAll('dt')).find(
+        (dt) => dt.textContent === 'Status',
+      );
+      expect(status?.nextElementSibling?.textContent?.trim()).toBe('Draft');
+    });
   });
 });

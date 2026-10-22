@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth/auth.service';
 import { ErrorNotifier } from './core/http/error-notifier';
 
@@ -13,4 +13,5 @@ import { ErrorNotifier } from './core/http/error-notifier';
 export class App {
   protected readonly auth = inject(AuthService);
   protected readonly errors = inject(ErrorNotifier);
+  protected readonly router = inject(Router);
 }

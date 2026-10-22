@@ -2,10 +2,13 @@ import { HttpContext } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../core/auth/auth.service';
 import { ApiError } from '../../core/http/api-error';
 import { HANDLES_ERRORS } from '../../core/http/error.interceptor';
 import { StatusBadge } from '../status-badge/status-badge';
+import { ChangeStatusForm } from '../track-actions/change-status-form';
+import { DistributeForm } from '../track-actions/distribute-form';
 import { TrackService } from '../track.service';
 
 /**
@@ -14,12 +17,14 @@ import { TrackService } from '../track.service';
  */
 @Component({
   selector: 'app-track-detail',
-  imports: [DatePipe, RouterLink, StatusBadge],
+  imports: [DatePipe, RouterLink, StatusBadge, DistributeForm, ChangeStatusForm],
   templateUrl: './track-detail.html',
   styleUrl: './track-detail.css',
 })
 export class TrackDetail {
   private readonly trackService = inject(TrackService);
+  protected readonly auth = inject(AuthService);
+  protected readonly router = inject(Router);
 
   /** From the `:id` route parameter (withComponentInputBinding). */
   readonly id = input.required<string>();

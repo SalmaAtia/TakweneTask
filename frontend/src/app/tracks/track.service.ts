@@ -33,11 +33,11 @@ export class TrackService {
     return this.http.post<TrackDetail>(this.baseUrl, request);
   }
 
-  distribute(id: string, dspIds: string[]): Observable<TrackDetail> {
-    return this.http.post<TrackDetail>(`${this.baseUrl}/${id}/distribute`, { dspIds });
+  distribute(id: string, dspIds: string[], context?: HttpContext): Observable<TrackDetail> {
+    return this.http.post<TrackDetail>(`${this.baseUrl}/${id}/distribute`, { dspIds }, { context });
   }
 
-  changeStatus(id: string, status: TrackStatus): Observable<TrackDetail> {
-    return this.http.patch<TrackDetail>(`${this.baseUrl}/${id}/status`, { status });
+  changeStatus(id: string, status: TrackStatus, context?: HttpContext): Observable<TrackDetail> {
+    return this.http.patch<TrackDetail>(`${this.baseUrl}/${id}/status`, { status }, { context });
   }
 }

@@ -17,7 +17,7 @@ describe('HTTP interceptors', () => {
   let notifier: ErrorNotifier;
 
   beforeEach(() => {
-    localStorage.clear();
+    sessionStorage.clear();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),

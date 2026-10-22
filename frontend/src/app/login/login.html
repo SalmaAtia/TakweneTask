@@ -1,0 +1,21 @@
+<form class="login" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <h2>Log in</h2>
+
+  <label>
+    Username
+    <input formControlName="username" autocomplete="username" />
+  </label>
+  <app-form-errors [error]="error()" field="username" />
+
+  <label>
+    Password
+    <input type="password" formControlName="password" autocomplete="current-password" />
+  </label>
+  <app-form-errors [error]="error()" field="password" />
+
+  <app-form-errors [error]="error()" [shownElsewhere]="['username', 'password']" />
+
+  <button type="submit" [disabled]="submitting()">
+    {{ submitting() ? 'Logging in…' : 'Log in' }}
+  </button>
+</form>

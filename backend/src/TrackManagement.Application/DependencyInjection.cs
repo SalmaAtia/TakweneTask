@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TrackManagement.Application.Artists;
+using TrackManagement.Application.Dsps;
 using TrackManagement.Application.Tracks;
 
 namespace TrackManagement.Application;
@@ -15,6 +16,7 @@ public static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
 
         services.AddScoped<IArtistAppService, ArtistAppService>();
+        services.AddScoped<IDspAppService, DspAppService>();
         services.AddScoped<ITrackAppService, TrackAppService>();
 
         return services;

@@ -8,5 +8,10 @@ export const routes: Routes = [
     loadComponent: () => import('./tracks/track-detail/track-detail').then((m) => m.TrackDetail),
     title: 'Track',
   },
+  {
+    path: 'login',
+    loadComponent: () => import('./login/login').then((m) => m.Login),
+    title: 'Log in',
+  },
   { path: '**', redirectTo: '' },
 ];

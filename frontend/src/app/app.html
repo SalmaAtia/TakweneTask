@@ -1,6 +1,10 @@
 <header class="header">
   <a routerLink="/" class="brand">Track Management</a>
-  <span class="session">{{ auth.isLoggedIn() ? 'Signed in' : 'Not signed in' }}</span>
+  @if (auth.isLoggedIn()) {
+    <button type="button" class="session" (click)="auth.logout()">Log out</button>
+  } @else {
+    <a class="session" routerLink="/login" [queryParams]="{ returnUrl: router.url }">Log in</a>
+  }
 </header>
 
 @if (errors.message(); as message) {

@@ -64,4 +64,17 @@
       </tbody>
     </table>
   }
+
+  @if (auth.isLoggedIn()) {
+    <!-- Each action returns the updated track, which replaces the shown one. -->
+    <section class="actions">
+      <app-distribute-form [track]="t" (updated)="track.value.set($event)" />
+      <app-change-status-form [track]="t" (updated)="track.value.set($event)" />
+    </section>
+  } @else {
+    <p class="state">
+      <a routerLink="/login" [queryParams]="{ returnUrl: router.url }">Log in</a> to distribute this
+      track or change its status.
+    </p>
+  }
 }
