@@ -1,0 +1,15 @@
+<header class="header">
+  <a routerLink="/" class="brand">Track Management</a>
+  <span class="session">{{ auth.isLoggedIn() ? 'Signed in' : 'Not signed in' }}</span>
+</header>
+
+@if (errors.message(); as message) {
+  <div class="error-banner" role="alert">
+    <span>{{ message }}</span>
+    <button type="button" (click)="errors.clear()" aria-label="Dismiss error">&times;</button>
+  </div>
+}
+
+<main class="content">
+  <router-outlet />
+</main>
