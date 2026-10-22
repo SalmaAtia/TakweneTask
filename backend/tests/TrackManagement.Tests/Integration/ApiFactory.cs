@@ -64,6 +64,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("DemoUser:Username", Username);
         builder.UseSetting("DemoUser:PasswordHash",
             new PasswordHasher<DemoUserOptions>().HashPassword(new DemoUserOptions(), Password));
+        // Every test logs in from the same (test server) client; keep the login rate limit out of the way.
+        builder.UseSetting("RateLimiting:Login:PermitLimit", "10000");
     }
 }
 

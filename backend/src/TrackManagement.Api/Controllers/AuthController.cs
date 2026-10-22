@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using TrackManagement.Api.Auth;
 using TrackManagement.Api.Auth.Dtos;
+using TrackManagement.Api.RateLimiting;
 
 namespace TrackManagement.Api.Controllers;
 
@@ -17,6 +19,7 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting(RateLimitingServiceCollectionExtensions.LoginPolicy)]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest input, CancellationToken cancellationToken)
     {
         var response = await _authService.LoginAsync(input, cancellationToken);

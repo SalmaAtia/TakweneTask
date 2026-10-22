@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.OpenApi.Models;
 using TrackManagement.Api.Auth;
 using TrackManagement.Api.ExceptionHandling;
+using TrackManagement.Api.RateLimiting;
 using TrackManagement.Api.Swagger;
 using TrackManagement.Application;
 using TrackManagement.Domain;
@@ -42,6 +43,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 builder.Services.AddHealthChecks();
 builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.Services.AddLoginRateLimiting(builder.Configuration);
 
 var corsOrigin = builder.Configuration["Cors:AllowedOrigin"];
 if (string.IsNullOrWhiteSpace(corsOrigin))
@@ -61,7 +63,9 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
-if (app.Environment.IsDevelopment())
+// Swagger is always on in Development. Elsewhere it is opt-in (Swagger:Enabled); the production
+// deployment turns it on on purpose so reviewers can try the API.
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
     app.UseSwagger();
     app.UseSwaggerUI();
@@ -70,6 +74,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors(AngularCorsPolicy);
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

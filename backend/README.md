@@ -1,5 +1,8 @@
 # Track Management API
 
+> **Getting started:** see the [root README](../README.md) for the full setup (SQL Server via Docker or LocalDB,
+> secrets, migrations, running the API and the Angular app). This file has the details.
+
 ## Authentication (JWT)
 
 All POST/PATCH endpoints require a JWT; GETs are public. There is a single demo account:
@@ -82,6 +85,9 @@ paste the token (without the `Bearer ` prefix) and confirm. Endpoints with a pad
 | `Jwt:Audience` | `appsettings.json` | `TrackManagement.Client` | Validated on every request |
 | `Jwt:ExpiryMinutes` | `appsettings.json` | `60` | Lifetime validated with 30 s clock skew |
 | `Cors:AllowedOrigin` | `appsettings.json` | `http://localhost:4200` | The only allowed origin (Angular dev server) |
+| `RateLimiting:Login:PermitLimit` | `appsettings.json` | `5` | Login attempts per client IP per window; then `429` |
+| `RateLimiting:Login:WindowSeconds` | `appsettings.json` | `60` | Fixed window length |
+| `Swagger:Enabled` | `appsettings.json` | `false` | Swagger outside `Development`; on in the production compose on purpose |
 
 User-secrets are only loaded in the `Development` environment. Elsewhere, use environment variables
 (`DemoUser__Username`, `DemoUser__PasswordHash`, `Jwt__SigningKey`).

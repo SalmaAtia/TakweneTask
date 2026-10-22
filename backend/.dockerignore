@@ -1,0 +1,15 @@
+# Build output and IDE files
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+*.user
+
+# Local secrets must never end up in an image
+**/appsettings.Development.json
+
+# Not needed to build the API
+tests/
+README.md
+Dockerfile
+.dockerignore
