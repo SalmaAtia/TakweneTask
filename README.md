@@ -3,11 +3,26 @@
 Full-stack take-home: a .NET 8 Web API (Clean Architecture, DDD) and an Angular 22 SPA for managing music tracks,
 their artists and their distribution to DSPs (Spotify, Apple Music, YouTube Music).
 
+## Live demo
+
+| | |
+| --- | --- |
+| App | https://54-39-110-14.sslip.io |
+| Swagger UI | https://54-39-110-14.sslip.io/swagger |
+| Login | `Admin` / `123456` |
+
+Browsing needs no login; creating and changing data does. In Swagger, get a token from `POST /api/auth/login` and
+paste it into **Authorize** ([details](#with-swagger)). The demo database is shared by everyone who uses it, and login
+is limited to 5 attempts per minute per IP.
+
+> The demo server is temporary: it stays up for one month at most (until about 22 November 2026) and won't be
+> available after that. To run the project yourself, see [Quick start](#quick-start).
+
 ```
 backend/    .NET 8 solution: Shared, Domain, Application, Infrastructure, Api + tests
 frontend/   Angular 22 app (standalone components, signals)
 docker-compose.yml        SQL Server for local development
-docker-compose.prod.yml   Production: SQL Server + API + Caddy (HTTPS), see Deployment
+docker-compose.prod.yml   Production: SQL Server + API + Caddy (HTTPS)
 ```
 
 ## Prerequisites
@@ -225,135 +240,6 @@ user, so they don't use the database or the user-secrets above.
 | Port 1433 already in use | `SQL_PORT=14333 docker compose up -d --wait` and change `localhost,1433` to `localhost,14333` in `appsettings.Development.json` |
 | The app shows "Cannot reach the server" | The API isn't running on port 5206 (step 4) |
 | Stop and reset the database | `docker compose down -v` (removes the volume), then repeat step 3 |
-
-## Deployment
-
-`docker-compose.prod.yml` runs the whole app on one Linux server:
-
-| Service | Image | Role |
-| --- | --- | --- |
-| `db` | `mcr.microsoft.com/mssql/server:2022-latest` (Express edition) | Database. Named volume `sqlserver-data`, **no published ports**, on an internal network with no internet access |
-| `migrator` | `backend/Dockerfile`, target `migrator` | One-off: applies pending migrations, then exits |
-| `api` | `backend/Dockerfile` | The API on port 8080, as the non-root `app` user. Reachable only through Caddy |
-| `web` | `frontend/Dockerfile` | Caddy: serves the Angular production build, proxies `/api/*`, `/swagger` and `/health` to `api`, and gets a Let's Encrypt certificate for `SITE_HOST` |
-
-The Angular production build calls the API at `/api` on its own origin, so the browser never makes a cross-origin
-request and the API needs no CORS setup in production.
-
-### Server requirements
-
-- Linux **x86-64** (SQL Server has no ARM64 image), at least **2 vCPU and 4 GB RAM** (SQL Server alone needs 2 GB),
-  10 GB free disk.
-- Docker Engine with the Compose plugin (v2.20 or later): `docker compose version`.
-- Ports **80 and 443** (TCP, plus 443/UDP for HTTP/3) open to the internet. Let's Encrypt validates on port 80.
-- A hostname that resolves to the server. Without a domain, use [sslip.io](https://sslip.io): for the IP
-  `203.0.113.10`, `203-0-113-10.sslip.io` already resolves to it, nothing to register.
-
-### Deploy
-
-```bash
-git clone https://github.com/SalmaAtia/TakweneTask.git
-cd TakweneTask
-cp .env.example .env && chmod 600 .env
-```
-
-Fill in `.env` (it is gitignored; `.env.example` has only placeholders):
-
-| Variable | Value |
-| --- | --- |
-| `SITE_HOST` | e.g. `203-0-113-10.sslip.io` |
-| `MSSQL_SA_PASSWORD` | `openssl rand -base64 24 \| tr -d '/+='` (no `;` `'` `"` `$`: it goes into a connection string) |
-| `JWT_SIGNING_KEY` | `openssl rand -base64 48` |
-| `DEMO_USERNAME` | `Admin` |
-| `DEMO_PASSWORD_HASH` | For the public demo password `123456`: the hash in [Quick start step 2](#2-configure-the-api). For another password, see below |
-| `SWAGGER_ENABLED` | `true` (see [Swagger in production](#swagger-in-production)) |
-
-Then build and start everything:
-
-```bash
-docker compose -f docker-compose.prod.yml up -d --build --wait
-```
-
-The first run pulls the base images and builds the API and the Angular app (a few minutes). Compose then starts
-`db`, waits until it is healthy, runs `migrator`, starts `api` once the migrator has exited successfully and `/health`
-answers, and finally `web`. Open `https://<SITE_HOST>`; Swagger is at `https://<SITE_HOST>/swagger`.
-
-To hash a different demo password (no .NET SDK needed on the server):
-
-```bash
-docker build -t trackmanagement-api ./backend
-echo 'your-password' | docker run --rm -i trackmanagement-api --hash-password 2>/dev/null
-```
-
-Check and troubleshoot:
-
-```bash
-docker compose -f docker-compose.prod.yml ps -a                # migrator: Exited (0); the rest: healthy
-docker compose -f docker-compose.prod.yml logs migrator        # applied migrations
-docker compose -f docker-compose.prod.yml logs -f api web      # API errors, certificate issuance
-```
-
-If the certificate fails, `SITE_HOST` doesn't resolve to this server or port 80 is blocked (check the cloud firewall /
-security group as well as the server's own).
-
-### Update
-
-```bash
-git pull
-docker compose -f docker-compose.prod.yml up -d --build --wait
-```
-
-Compose rebuilds the images, runs `migrator` again (it applies only the new migrations; with none it logs "No
-migrations were applied") and recreates `api` and `web`. The database and the certificates are in named volumes and
-survive updates. There is a short downtime while `api` restarts (single instance).
-
-Other operations:
-
-| Task | Command |
-| --- | --- |
-| Stop (keep data) | `docker compose -f docker-compose.prod.yml down` |
-| Change a secret in `.env` | Edit it, then `docker compose -f docker-compose.prod.yml up -d` (recreates what uses it) |
-| Back up the database | See below |
-| Delete everything, including data | `docker compose -f docker-compose.prod.yml down -v` |
-
-Back up the database to `./TrackManagement.bak` (the password is read inside the container):
-
-```bash
-docker compose -f docker-compose.prod.yml exec db sh -c '/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa \
-  -P "$MSSQL_SA_PASSWORD" -C -b -Q "BACKUP DATABASE TrackManagement TO DISK = N'"'"'/var/opt/mssql/TrackManagement.bak'"'"' WITH INIT"'
-docker compose -f docker-compose.prod.yml cp db:/var/opt/mssql/TrackManagement.bak .
-```
-
-### Why a migration bundle (and not `Database.Migrate()` at startup)
-
-Migrations run as a separate step: `dotnet ef migrations bundle` builds a single executable (`efbundle`) in
-the API image's build stage, and the `migrator` service runs it once per deploy.
-
-- **A failed migration stops the deploy, not the app in a loop.** The API waits for
-  `service_completed_successfully`, so it never starts against a half-migrated schema; the error is in
-  `logs migrator`. With `Migrate()` in `Program.cs`, a failure becomes a crash/restart loop of the API.
-- **No race between instances.** Migrating at startup runs once per instance; two replicas starting together both
-  try to migrate. One migrator per deploy avoids that if the API is ever scaled out.
-- **The app doesn't need schema rights to run.** The step that changes the schema is separate from the long-running
-  process, so the API's login could later be restricted to read/write (here both use `sa`; see below).
-- **No `dotnet ef` or SDK on the server.** The bundle is built inside Docker with the exact migrations of that
-  commit, and it is idempotent: it applies only what `__EFMigrationsHistory` doesn't have yet.
-
-### Swagger in production
-
-Swagger UI is normally only on in `Development`. Here it is **turned on deliberately** (`SWAGGER_ENABLED=true`, read
-as `Swagger:Enabled`) so reviewers can try the API at `https://<SITE_HOST>/swagger` without any tools. It exposes
-nothing beyond what the API already serves: GETs are public anyway, and every write still needs a JWT. Set
-`SWAGGER_ENABLED=false` and run `up -d` to hide it.
-
-### Login rate limiting
-
-Because the demo credentials are public, `POST /api/auth/login` is limited to **5 attempts per minute per client IP**
-(ASP.NET Core's built-in rate limiter, fixed window); further attempts get `429` with a `Retry-After` header and a
-ProblemDetails body, which the login page shows. Successful logins count too. The client IP comes from
-`X-Forwarded-For`, set by Caddy (the API trusts it via `ASPNETCORE_FORWARDEDHEADERS_ENABLED`; the API is reachable
-only through Caddy, and Caddy replaces any `X-Forwarded-For` a client sends). Tune it with `RateLimiting__Login__PermitLimit`
-and `RateLimiting__Login__WindowSeconds` on the `api` service.
 
 ## More
 
