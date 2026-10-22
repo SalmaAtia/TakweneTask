@@ -1,0 +1,125 @@
+# Production deployment: SQL Server + API + Caddy (Angular app, reverse proxy, automatic HTTPS).
+#
+#   cp .env.example .env   # then fill it in
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Only Caddy publishes ports (80/443). The database is on an internal network with no published
+# ports and no internet access; the API is reachable only through Caddy.
+name: trackmanagement
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-connection-string: &connection-string
+  ConnectionStrings__DefaultConnection: "Server=db,1433;Database=TrackManagement;User Id=sa;Password=${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in .env};Encrypt=True;TrustServerCertificate=True"
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64 # the only platform SQL Server is published for
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in .env}"
+      # Express: free for production use (Developer edition is licensed for dev/test only).
+      MSSQL_PID: Express
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks: [backend]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' -b -o /dev/null",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    logging: *logging
+
+  # One-off: applies pending EF Core migrations (an idempotent migration bundle), then exits.
+  # The API starts only after it exits with code 0.
+  migrator:
+    build:
+      context: ./backend
+      target: migrator
+    image: trackmanagement-migrator
+    restart: "no"
+    environment:
+      <<: *connection-string
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [backend]
+    logging: *logging
+
+  api:
+    build:
+      context: ./backend
+      target: api
+    image: trackmanagement-api
+    restart: unless-stopped
+    environment:
+      <<: *connection-string
+      ASPNETCORE_ENVIRONMENT: Production
+      # Trust X-Forwarded-For/-Proto from Caddy: real client IPs for the login rate limit, https scheme.
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      Jwt__SigningKey: "${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in .env}"
+      DemoUser__Username: "${DEMO_USERNAME:?set DEMO_USERNAME in .env}"
+      DemoUser__PasswordHash: "${DEMO_PASSWORD_HASH:?set DEMO_PASSWORD_HASH in .env}"
+      # Same-origin in production, so CORS is unused; the API still requires a value.
+      Cors__AllowedOrigin: "https://${SITE_HOST:?set SITE_HOST in .env}"
+      # Intentional: Swagger UI at /swagger so reviewers can try the API. Set to false to hide it.
+      Swagger__Enabled: "${SWAGGER_ENABLED:-true}"
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+    networks: [backend, edge]
+    healthcheck:
+      # The runtime image has no curl; bash's /dev/tcp is enough for GET /health.
+      test:
+        [
+          "CMD",
+          "bash",
+          "-c",
+          "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health HTTP/1.0\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q ' 200 '",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    logging: *logging
+
+  web:
+    build:
+      context: ./frontend
+    image: trackmanagement-web
+    restart: unless-stopped
+    environment:
+      SITE_HOST: "${SITE_HOST:?set SITE_HOST in .env}"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    volumes:
+      - caddy-data:/data # certificates: keep them, or Let's Encrypt rate limits apply on redeploys
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [edge]
+    logging: *logging
+
+networks:
+  backend:
+    internal: true # no route to the outside world
+  edge:
+
+volumes:
+  sqlserver-data:
+  caddy-data:
+  caddy-config:
