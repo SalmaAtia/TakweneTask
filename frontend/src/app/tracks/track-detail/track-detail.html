@@ -48,6 +48,9 @@
           <th>DSP</th>
           <th>Status</th>
           <th>Submitted at</th>
+          @if (auth.isLoggedIn()) {
+            <th>DSP outcome</th>
+          }
         </tr>
       </thead>
       <tbody>
@@ -59,6 +62,15 @@
             <td>
               <time [attr.datetime]="d.submittedAt">{{ d.submittedAt | date: 'medium' }}</time>
             </td>
+            @if (auth.isLoggedIn()) {
+              <td>
+                <app-distribution-outcome
+                  [trackId]="t.id"
+                  [distribution]="d"
+                  (updated)="track.value.set($event)"
+                />
+              </td>
+            }
           </tr>
         }
       </tbody>
@@ -74,7 +86,7 @@
   } @else {
     <p class="state">
       <a routerLink="/login" [queryParams]="{ returnUrl: router.url }">Log in</a> to distribute this
-      track or change its status.
+      track, record DSP outcomes or change its status.
     </p>
   }
 }

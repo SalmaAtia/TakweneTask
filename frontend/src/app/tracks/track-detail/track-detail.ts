@@ -9,6 +9,7 @@ import { HANDLES_ERRORS } from '../../core/http/error.interceptor';
 import { StatusBadge } from '../status-badge/status-badge';
 import { ChangeStatusForm } from '../track-actions/change-status-form';
 import { DistributeForm } from '../track-actions/distribute-form';
+import { DistributionOutcomeActions } from '../track-actions/distribution-outcome';
 import { TrackService } from '../track.service';
 
 /**
@@ -17,7 +18,14 @@ import { TrackService } from '../track.service';
  */
 @Component({
   selector: 'app-track-detail',
-  imports: [DatePipe, RouterLink, StatusBadge, DistributeForm, ChangeStatusForm],
+  imports: [
+    DatePipe,
+    RouterLink,
+    StatusBadge,
+    DistributeForm,
+    ChangeStatusForm,
+    DistributionOutcomeActions,
+  ],
   templateUrl: './track-detail.html',
   styleUrl: './track-detail.css',
 })

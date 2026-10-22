@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   CreateTrackRequest,
+  DistributionOutcome,
   Track,
   TrackDetail,
   TrackListQuery,
@@ -39,5 +40,19 @@ export class TrackService {
 
   changeStatus(id: string, status: TrackStatus, context?: HttpContext): Observable<TrackDetail> {
     return this.http.patch<TrackDetail>(`${this.baseUrl}/${id}/status`, { status }, { context });
+  }
+
+  /** Records a DSP's outcome for the track's Pending distribution to that DSP. */
+  changeDistributionStatus(
+    id: string,
+    dspId: string,
+    status: DistributionOutcome,
+    context?: HttpContext,
+  ): Observable<TrackDetail> {
+    return this.http.patch<TrackDetail>(
+      `${this.baseUrl}/${id}/distributions/${dspId}`,
+      { status },
+      { context },
+    );
   }
 }

@@ -8,6 +8,7 @@ import { errorInterceptor } from '../../core/http/error.interceptor';
 import { TrackDetail } from '../track.models';
 import { ChangeStatusForm } from './change-status-form';
 import { DistributeForm } from './distribute-form';
+import { DistributionOutcomeActions } from './distribution-outcome';
 
 const api = environment.apiBaseUrl;
 
@@ -200,5 +201,72 @@ describe('ChangeStatusForm', () => {
     expect(el.querySelector('.form-error')?.textContent).toContain(
       'at least one distribution is Live',
     );
+  });
+});
+
+describe('DistributionOutcomeActions', () => {
+  async function renderOutcome(status: TrackDetail['distributions'][number]['status']) {
+    const fixture = TestBed.createComponent(DistributionOutcomeActions);
+    fixture.componentRef.setInput('trackId', 't1');
+    fixture.componentRef.setInput('distribution', { ...track.distributions[0], status });
+    const updated: TrackDetail[] = [];
+    fixture.componentInstance.updated.subscribe((t) => updated.push(t));
+    await fixture.whenStable();
+    return { fixture, el: fixture.nativeElement as HTMLElement, updated };
+  }
+
+  const buttons = (el: HTMLElement) => Array.from(el.querySelectorAll('button'));
+
+  it('offers Mark live and Reject for a Pending distribution only', async () => {
+    expect(buttons((await renderOutcome('Pending')).el).map((b) => b.textContent?.trim())).toEqual([
+      'Mark live',
+      'Reject',
+    ]);
+    expect(buttons((await renderOutcome('Live')).el)).toHaveLength(0);
+    expect(buttons((await renderOutcome('Rejected')).el)).toHaveLength(0);
+  });
+
+  it.each([
+    ['Mark live', 'Live'],
+    ['Reject', 'Rejected'],
+  ])('"%s" records %s and emits the updated track', async (label, status) => {
+    const { fixture, el, updated } = await renderOutcome('Pending');
+
+    buttons(el)
+      .find((b) => b.textContent?.trim() === label)!
+      .click();
+    await fixture.whenStable();
+    expect(buttons(el).every((b) => b.disabled)).toBe(true); // no double submit
+
+    const req = backend.expectOne({
+      method: 'PATCH',
+      url: `${api}/tracks/t1/distributions/spotify`,
+    });
+    expect(req.request.body).toEqual({ status });
+    const response = {
+      ...track,
+      distributions: [{ ...track.distributions[0], status: status as 'Live' | 'Rejected' }],
+    };
+    req.flush(response);
+    await fixture.whenStable();
+
+    expect(updated).toEqual([response]);
+  });
+
+  it('shows API errors inline, not in the banner', async () => {
+    const { fixture, el } = await renderOutcome('Pending');
+
+    buttons(el)[0].click();
+    backend
+      .expectOne(`${api}/tracks/t1/distributions/spotify`)
+      .flush(
+        { status: 409, detail: "Distribution to DSP 'spotify' is already Live." },
+        { status: 409, statusText: 'Conflict' },
+      );
+    await fixture.whenStable();
+
+    expect(el.querySelector('.form-error')?.textContent).toContain('already Live');
+    expect(TestBed.inject(ErrorNotifier).message()).toBeNull();
+    expect(buttons(el).some((b) => b.disabled)).toBe(false);
   });
 });

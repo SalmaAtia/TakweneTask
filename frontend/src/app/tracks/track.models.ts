@@ -12,6 +12,9 @@ export function parseTrackStatus(value: string | null | undefined): TrackStatus 
 
 export type DistributionStatus = 'Pending' | 'Live' | 'Rejected';
 
+/** What a DSP can answer for a Pending distribution: the only statuses a caller may set. */
+export type DistributionOutcome = Exclude<DistributionStatus, 'Pending'>;
+
 /** GET /api/tracks item (TrackListItemDto). */
 export interface Track {
   id: string;
@@ -69,4 +72,9 @@ export interface DistributeTrackRequest {
 /** PATCH /api/tracks/{id}/status (ChangeTrackStatusDto). */
 export interface ChangeTrackStatusRequest {
   status: TrackStatus;
+}
+
+/** PATCH /api/tracks/{id}/distributions/{dspId} (ChangeDistributionStatusDto). */
+export interface ChangeDistributionStatusRequest {
+  status: DistributionOutcome;
 }

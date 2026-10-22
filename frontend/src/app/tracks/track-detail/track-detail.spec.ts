@@ -182,6 +182,11 @@ describe('TrackDetail', () => {
     it('are hidden when logged out, with a login link that returns here', async () => {
       await load('/tracks/t1?status=Submitted', ok(track));
 
+      expect(el().querySelector('app-distribution-outcome')).toBeNull();
+      expect(Array.from(el().querySelectorAll('th')).map((th) => th.textContent)).not.toContain(
+        'DSP outcome',
+      );
+
       expect(el().querySelector('app-distribute-form')).toBeNull();
       expect(el().querySelector('app-change-status-form')).toBeNull();
       const login = el().querySelector<HTMLAnchorElement>('a[href^="/login"]')!;
@@ -213,6 +218,48 @@ describe('TrackDetail', () => {
         (dt) => dt.textContent === 'Status',
       );
       expect(status?.nextElementSibling?.textContent?.trim()).toBe('Draft');
+    });
+
+    it('can take a track to Distributed from the UI: mark a distribution live, then change status', async () => {
+      logIn();
+      const pending: TrackDetailModel = {
+        ...track,
+        distributions: [{ ...track.distributions[1] }], // YouTube Music, Pending
+      };
+      await harness.navigateByUrl('/tracks/t1');
+      backend.expectOne(trackUrl('t1')).flush(pending);
+      (await vi.waitFor(() => backend.expectOne(`${environment.apiBaseUrl}/dsps`))).flush([]);
+      await harness.fixture.whenStable();
+
+      // 1. Mark the Pending distribution live.
+      const markLive = Array.from(el().querySelectorAll<HTMLButtonElement>('tbody button')).find(
+        (b) => b.textContent?.trim() === 'Mark live',
+      )!;
+      markLive.click();
+      const live = {
+        ...pending,
+        distributions: [{ ...pending.distributions[0], status: 'Live' as const }],
+      };
+      backend.expectOne(`${trackUrl('t1')}/distributions/d3`).flush(live);
+      await harness.fixture.whenStable();
+
+      const row = el().querySelector('tbody tr')!;
+      expect(row.querySelector('app-status-badge')?.textContent?.trim()).toBe('Live');
+      expect(row.querySelectorAll('button')).toHaveLength(0);
+
+      // 2. Now the track can become Distributed.
+      const select = el().querySelector<HTMLSelectElement>('app-change-status-form select')!;
+      select.value = 'Distributed';
+      select.dispatchEvent(new Event('change'));
+      await harness.fixture.whenStable();
+      el().querySelector('app-change-status-form form')!.dispatchEvent(new Event('submit'));
+      backend.expectOne(`${trackUrl('t1')}/status`).flush({ ...live, status: 'Distributed' });
+      await harness.fixture.whenStable();
+
+      const status = Array.from(el().querySelectorAll('dt')).find(
+        (dt) => dt.textContent === 'Status',
+      );
+      expect(status?.nextElementSibling?.textContent?.trim()).toBe('Distributed');
     });
   });
 });

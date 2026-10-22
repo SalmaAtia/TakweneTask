@@ -42,7 +42,8 @@ src/app/
   login/                   login page (?returnUrl=)
   dsps/                    DspService (DSP list for the distribute form)
   tracks/                  models matching the API DTOs, TrackService, list/detail pages,
-                           track-actions/ (Distribute, Change status; shown when logged in)
+                           track-actions/ (Distribute, Change status, Mark live / Reject per Pending
+                           distribution; shown when logged in)
 ```
 
 - `authInterceptor` adds `Authorization: Bearer <token>` to requests for `apiBaseUrl` only.
