@@ -1,4 +1,4 @@
-namespace TrackManagement.Domain.Tracks;
+namespace TrackManagement.Shared.Enums;
 
 public enum DistributionStatus
 {

@@ -1,14 +1,13 @@
 using TrackManagement.Domain.Common;
 using TrackManagement.Domain.Common.Exceptions;
 using TrackManagement.Domain.ValueObjects;
+using TrackManagement.Shared.Enums;
+using TrackManagement.Shared;
 
 namespace TrackManagement.Domain.Tracks;
 
 public sealed class Track : Entity, IAggregateRoot
 {
-    public const int TitleMaxLength = 200;
-    public const int GenreMaxLength = 50;
-
     private static readonly HashSet<(TrackStatus From, TrackStatus To)> AllowedTransitions =
     [
         (TrackStatus.Draft, TrackStatus.Submitted),
@@ -48,11 +47,11 @@ public sealed class Track : Entity, IAggregateRoot
 
         return new Track(
             Guid.NewGuid(),
-            Guard.RequiredText(title, "Title", TitleMaxLength),
+            Guard.RequiredText(title, "Title", ValidationConstants.Track.TitleMaxLength),
             Guard.RequiredId(artistId, "Artist id"),
             isrc,
             releaseDate,
-            Guard.RequiredText(genre, "Genre", GenreMaxLength));
+            Guard.RequiredText(genre, "Genre", ValidationConstants.Track.GenreMaxLength));
     }
 
     /// <summary>

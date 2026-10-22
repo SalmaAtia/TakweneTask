@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TrackManagement.Domain\TrackManagement.Domain.csproj" />
+    <ProjectReference Include="..\TrackManagement.Shared\TrackManagement.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

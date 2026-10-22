@@ -1,5 +1,6 @@
 using TrackManagement.Domain.Common;
 using TrackManagement.Domain.Common.Exceptions;
+using TrackManagement.Shared.Enums;
 
 namespace TrackManagement.Domain.Tracks;
 

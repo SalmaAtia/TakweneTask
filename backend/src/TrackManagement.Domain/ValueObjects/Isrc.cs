@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using TrackManagement.Domain.Common.Exceptions;
+using TrackManagement.Shared;
 
 namespace TrackManagement.Domain.ValueObjects;
 
@@ -9,8 +10,6 @@ namespace TrackManagement.Domain.ValueObjects;
 /// </summary>
 public sealed partial record Isrc
 {
-    public const int Length = 15;
-
     public string Value { get; }
 
     private Isrc(string value) => Value = value;
@@ -32,7 +31,6 @@ public sealed partial record Isrc
 
     public override string ToString() => Value;
 
-    // CC (country) + XXX (registrant) + YY (year) + NNNNN (designation)
-    [GeneratedRegex("^[A-Z]{2}[A-Z0-9]{3}[0-9]{2}[0-9]{5}$")]
+    [GeneratedRegex(ValidationConstants.Isrc.CompactPattern)]
     private static partial Regex CompactPattern();
 }

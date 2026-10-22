@@ -6,4 +6,7 @@
     <!-- Tests build aggregates directly (Track.Create, Artist.Create) without going through the managers. -->
     <InternalsVisibleTo Include="TrackManagement.Tests" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TrackManagement.Shared\TrackManagement.Shared.csproj" />
+  </ItemGroup>
 </Project>

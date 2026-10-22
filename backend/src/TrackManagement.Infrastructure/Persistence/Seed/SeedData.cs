@@ -1,5 +1,6 @@
 using TrackManagement.Domain.Tracks;
 using TrackManagement.Domain.ValueObjects;
+using TrackManagement.Shared.Enums;
 
 namespace TrackManagement.Infrastructure.Persistence.Seed;
 

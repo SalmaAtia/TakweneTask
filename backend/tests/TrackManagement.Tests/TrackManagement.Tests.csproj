@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\TrackManagement.Api\TrackManagement.Api.csproj" />
     <ProjectReference Include="..\..\src\TrackManagement.Domain\TrackManagement.Domain.csproj" />
     <ProjectReference Include="..\..\src\TrackManagement.Infrastructure\TrackManagement.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\TrackManagement.Shared\TrackManagement.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

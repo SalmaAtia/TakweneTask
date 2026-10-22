@@ -1,13 +1,12 @@
 using System.Text.RegularExpressions;
 using TrackManagement.Domain.Common.Exceptions;
+using TrackManagement.Shared;
 
 namespace TrackManagement.Domain.ValueObjects;
 
 /// <summary>ISO 3166-1 alpha-2 country code (format check only), e.g. "EG".</summary>
 public sealed partial record CountryCode
 {
-    public const int Length = 2;
-
     public string Value { get; }
 
     private CountryCode(string value) => Value = value;
@@ -27,6 +26,6 @@ public sealed partial record CountryCode
 
     public override string ToString() => Value;
 
-    [GeneratedRegex("^[A-Z]{2}$")]
+    [GeneratedRegex(ValidationConstants.CountryCode.Pattern)]
     private static partial Regex Pattern();
 }

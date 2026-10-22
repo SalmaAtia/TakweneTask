@@ -1,5 +1,6 @@
 using TrackManagement.Domain.Common.Exceptions;
 using TrackManagement.Domain.ValueObjects;
+using TrackManagement.Shared;
 
 namespace TrackManagement.Tests.Domain;
 
@@ -57,7 +58,7 @@ public sealed class EmailTests
     [Fact]
     public void Rejects_input_longer_than_max_length()
     {
-        var tooLong = new string('a', Email.MaxLength - "@example.com".Length + 1) + "@example.com";
+        var tooLong = new string('a', ValidationConstants.Email.MaxLength - "@example.com".Length + 1) + "@example.com";
 
         Assert.Throws<DomainException>(() => Email.Create(tooLong));
     }

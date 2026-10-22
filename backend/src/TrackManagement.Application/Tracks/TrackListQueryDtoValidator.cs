@@ -1,6 +1,6 @@
 using FluentValidation;
 using TrackManagement.Application.Tracks.Dtos;
-using TrackManagement.Domain.Tracks;
+using TrackManagement.Shared;
 
 namespace TrackManagement.Application.Tracks;
 
@@ -9,7 +9,7 @@ public sealed class TrackListQueryDtoValidator : AbstractValidator<TrackListQuer
     public TrackListQueryDtoValidator()
     {
         RuleFor(x => x.Genre)
-            .MaximumLength(Track.GenreMaxLength);
+            .MaximumLength(ValidationConstants.Track.GenreMaxLength);
 
         RuleFor(x => x.Status)
             .Must(TrackStatusNames.IsValid)

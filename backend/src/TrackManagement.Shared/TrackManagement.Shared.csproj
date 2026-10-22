@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Constants and enums shared by every layer. References nothing (no projects, no packages). -->
+</Project>

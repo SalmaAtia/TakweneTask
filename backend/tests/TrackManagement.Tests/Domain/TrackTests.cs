@@ -1,6 +1,7 @@
 using TrackManagement.Domain.Common.Exceptions;
 using TrackManagement.Domain.Tracks;
 using TrackManagement.Domain.ValueObjects;
+using TrackManagement.Shared.Enums;
 
 namespace TrackManagement.Tests.Domain;
 

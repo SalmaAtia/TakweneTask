@@ -1,15 +1,13 @@
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using TrackManagement.Shared;
 
 namespace TrackManagement.Api.Auth;
 
 public sealed class JwtOptions
 {
     public const string SectionName = "Jwt";
-
-    // HMAC-SHA256 needs a key of at least 256 bits.
-    public const int MinSigningKeyBytes = 32;
 
     public string Issuer { get; init; } = string.Empty;
     public string Audience { get; init; } = string.Empty;
@@ -31,8 +29,9 @@ internal sealed class JwtOptionsValidator : IValidateOptions<JwtOptions>
             failures.Add($"{JwtOptions.SectionName}:Audience is required.");
         if (string.IsNullOrWhiteSpace(options.SigningKey))
             failures.Add($"{JwtOptions.SectionName}:SigningKey is required.");
-        else if (Encoding.UTF8.GetByteCount(options.SigningKey) < JwtOptions.MinSigningKeyBytes)
-            failures.Add($"{JwtOptions.SectionName}:SigningKey must be at least {JwtOptions.MinSigningKeyBytes} bytes.");
+        else if (Encoding.UTF8.GetByteCount(options.SigningKey) < AuthValidationConstants.MinSigningKeyBytes)
+            failures.Add(
+                $"{JwtOptions.SectionName}:SigningKey must be at least {AuthValidationConstants.MinSigningKeyBytes} bytes.");
         if (options.ExpiryMinutes <= 0)
             failures.Add($"{JwtOptions.SectionName}:ExpiryMinutes must be greater than 0.");
 

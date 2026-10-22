@@ -1,12 +1,11 @@
 using TrackManagement.Domain.Common;
 using TrackManagement.Domain.ValueObjects;
+using TrackManagement.Shared;
 
 namespace TrackManagement.Domain.Artists;
 
 public sealed class Artist : Entity, IAggregateRoot
 {
-    public const int NameMaxLength = 200;
-
     public string Name { get; private set; } = null!;
     public Email Email { get; private set; } = null!;
     public CountryCode Country { get; private set; } = null!;
@@ -28,10 +27,10 @@ public sealed class Artist : Entity, IAggregateRoot
         ArgumentNullException.ThrowIfNull(email);
         ArgumentNullException.ThrowIfNull(country);
 
-        return new Artist(Guid.NewGuid(), Guard.RequiredText(name, "Artist name", NameMaxLength), email, country);
+        return new Artist(Guid.NewGuid(), Guard.RequiredText(name, "Artist name", ValidationConstants.Artist.NameMaxLength), email, country);
     }
 
-    public void Rename(string name) => Name = Guard.RequiredText(name, "Artist name", NameMaxLength);
+    public void Rename(string name) => Name = Guard.RequiredText(name, "Artist name", ValidationConstants.Artist.NameMaxLength);
 
     /// <summary>Use <see cref="ArtistManager.ChangeEmailAsync"/>; it enforces email uniqueness.</summary>
     internal void ChangeEmail(Email email)

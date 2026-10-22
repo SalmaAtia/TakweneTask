@@ -1,13 +1,12 @@
 using System.Text.RegularExpressions;
 using TrackManagement.Domain.Common.Exceptions;
+using TrackManagement.Shared;
 
 namespace TrackManagement.Domain.ValueObjects;
 
 /// <summary>Email address, normalized to lowercase so uniqueness is case-insensitive.</summary>
 public sealed partial record Email
 {
-    public const int MaxLength = 254;
-
     public string Value { get; }
 
     private Email(string value) => Value = value;
@@ -19,8 +18,8 @@ public sealed partial record Email
 
         var normalized = value.Trim().ToLowerInvariant();
 
-        if (normalized.Length > MaxLength)
-            throw new DomainException($"Email must be at most {MaxLength} characters.");
+        if (normalized.Length > ValidationConstants.Email.MaxLength)
+            throw new DomainException($"Email must be at most {ValidationConstants.Email.MaxLength} characters.");
 
         if (!Pattern().IsMatch(normalized))
             throw new DomainException($"'{value}' is not a valid email address.");
@@ -30,6 +29,6 @@ public sealed partial record Email
 
     public override string ToString() => Value;
 
-    [GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")]
+    [GeneratedRegex(ValidationConstants.Email.Pattern)]
     private static partial Regex Pattern();
 }

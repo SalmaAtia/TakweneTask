@@ -3,6 +3,7 @@ using TrackManagement.Domain.Common.Exceptions;
 using TrackManagement.Domain.Dsps;
 using TrackManagement.Domain.Tracks;
 using TrackManagement.Domain.ValueObjects;
+using TrackManagement.Shared.Enums;
 using TrackManagement.Tests.Fakes;
 
 namespace TrackManagement.Tests.Domain;

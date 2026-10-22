@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TrackManagement.Domain.Dsps;
 using TrackManagement.Domain.Tracks;
 using TrackManagement.Infrastructure.Persistence.Seed;
+using TrackManagement.Shared;
 
 namespace TrackManagement.Infrastructure.Persistence.Configurations;
 
@@ -19,7 +20,7 @@ internal sealed class TrackDistributionConfiguration : IEntityTypeConfiguration<
 
         builder.Property(d => d.Status)
             .HasConversion<string>()
-            .HasMaxLength(20)
+            .HasMaxLength(ValidationConstants.Status.MaxLength)
             .IsRequired();
 
         // A track can be sent to a given DSP only once.

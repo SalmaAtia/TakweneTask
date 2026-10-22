@@ -4,6 +4,7 @@ using TrackManagement.Domain.Artists;
 using TrackManagement.Domain.Tracks;
 using TrackManagement.Domain.ValueObjects;
 using TrackManagement.Infrastructure.Persistence.Seed;
+using TrackManagement.Shared;
 
 namespace TrackManagement.Infrastructure.Persistence.Configurations;
 
@@ -17,12 +18,12 @@ internal sealed class TrackConfiguration : IEntityTypeConfiguration<Track>
         builder.Property(t => t.Id).ValueGeneratedNever();
 
         builder.Property(t => t.Title)
-            .HasMaxLength(Track.TitleMaxLength)
+            .HasMaxLength(ValidationConstants.Track.TitleMaxLength)
             .IsRequired();
 
         builder.Property(t => t.Isrc)
             .HasConversion(i => i.Value, v => Isrc.Create(v))
-            .HasMaxLength(Isrc.Length)
+            .HasMaxLength(ValidationConstants.Isrc.Length)
             .IsFixedLength()
             .IsUnicode(false)
             .IsRequired();
@@ -30,12 +31,12 @@ internal sealed class TrackConfiguration : IEntityTypeConfiguration<Track>
         builder.Property(t => t.ReleaseDate).IsRequired();
 
         builder.Property(t => t.Genre)
-            .HasMaxLength(Track.GenreMaxLength)
+            .HasMaxLength(ValidationConstants.Track.GenreMaxLength)
             .IsRequired();
 
         builder.Property(t => t.Status)
             .HasConversion<string>()
-            .HasMaxLength(20)
+            .HasMaxLength(ValidationConstants.Status.MaxLength)
             .IsRequired();
 
         builder.HasIndex(t => t.Isrc).IsUnique();

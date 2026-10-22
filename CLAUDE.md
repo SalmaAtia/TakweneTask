@@ -2,13 +2,16 @@
 Full-stack take-home: .NET Web API (Clean Architecture) + Angular SPA.
 
 ## Backend conventions
-- .NET 8 (LTS), solution in /backend, projects: Domain, Application, Infrastructure, Api
+- .NET 8 (LTS), solution in /backend, projects: Shared, Domain, Application, Infrastructure, Api
 - Layering (ABP-style DDD inside Clean Architecture). Project references:
-  - Domain → nothing (no project references; only NuGet package allowed is Microsoft.Extensions.DependencyInjection.Abstractions).
-  - Application → Domain.
-  - Infrastructure → Domain only (never Application).
-  - Api → Application, Infrastructure (composition root).
+  - Shared → nothing (no project references, no NuGet packages).
+  - Domain → Shared only (only NuGet package allowed is Microsoft.Extensions.DependencyInjection.Abstractions).
+  - Application → Domain, Shared.
+  - Infrastructure → Domain, Shared (never Application).
+  - Api → Application, Infrastructure, Shared (composition root).
+  - Every project that uses Shared references it directly (don't rely on transitive references).
 - Layer responsibilities:
+  - Shared: only constants and enums, as static classes of `const` fields. ValidationConstants (every length, pattern and limit for catalog data, nested per concept: Track, Artist, Dsp, Status, Isrc, Email, CountryCode), AuthValidationConstants (login and JWT limits), Enums/ (TrackStatus, DistributionStatus). Never hard-code a limit or pattern elsewhere: domain guards, FluentValidation rules and EF column sizes all read these. Changing a length changes the schema, so add a migration.
   - Domain: aggregates/entities, value objects, repository interfaces (next to their aggregate), IUnitOfWork, domain managers, DomainException hierarchy.
   - Application: application services, DTOs, FluentValidation validators.
   - Infrastructure: AppDbContext, EF configurations, repository + UnitOfWork implementations, migrations.
@@ -52,4 +55,4 @@ Full-stack take-home: .NET Web API (Clean Architecture) + Angular SPA.
 - Exceptions (Domain/Common/Exceptions): only three — DomainException (any rule/value violation), NotFoundException, ConflictException (both derive from DomainException). Don't add a type per situation; put specifics in the message. Use ConflictException (409) when the resource's current state forbids the operation (invalid status transition, already distributed, DSP already present, distribution not Pending); plain DomainException (422) when the input itself is invalid. Don't use BCL exceptions (ArgumentException etc.) for expected failures: those must stay 500s.
 - HTTP mapping (Api/ExceptionHandling/GlobalExceptionHandler, kept minimal): FluentValidation ValidationException → 400 ValidationProblemDetails (camelCase keys); NotFoundException → 404; ConflictException and unique-index DbUpdateException → 409; any other DomainException → 422. Everything else is left to the built-in exception handler (500 ProblemDetails, no details). The built-in middleware logs handled exceptions at Error too; accepted noise on .NET 8.
 - FluentValidation checks request shape only; value objects/entities still enforce the rules. MVC's implicit [Required] for non-nullable refs is disabled so FluentValidation owns all 400s for DTO fields.
-- Domain project has no reference to EF Core or any NuGet package except Microsoft.Extensions.DependencyInjection.Abstractions (for AddDomain).
+- Domain project has no reference to EF Core or any NuGet package except Microsoft.Extensions.DependencyInjection.Abstractions (for AddDomain); its only project reference is Shared.

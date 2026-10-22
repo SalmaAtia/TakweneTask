@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TrackManagement.Application\TrackManagement.Application.csproj" />
     <ProjectReference Include="..\TrackManagement.Infrastructure\TrackManagement.Infrastructure.csproj" />
+    <ProjectReference Include="..\TrackManagement.Shared\TrackManagement.Shared.csproj" />
   </ItemGroup>
 
 </Project>

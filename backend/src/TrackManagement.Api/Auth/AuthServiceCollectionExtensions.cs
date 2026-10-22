@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using TrackManagement.Api.Auth.Dtos;
+using TrackManagement.Shared;
 
 namespace TrackManagement.Api.Auth;
 
@@ -41,7 +42,7 @@ internal static class AuthServiceCollectionExtensions
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = jwt.CreateSigningKey(),
                     ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
-                    ClockSkew = TimeSpan.FromSeconds(30),
+                    ClockSkew = TimeSpan.FromSeconds(AuthValidationConstants.TokenClockSkewSeconds),
                     NameClaimType = "sub"
                 };
             });

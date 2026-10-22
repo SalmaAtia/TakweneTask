@@ -1,7 +1,6 @@
 using FluentValidation;
 using TrackManagement.Application.Artists.Dtos;
-using TrackManagement.Domain.Artists;
-using TrackManagement.Domain.ValueObjects;
+using TrackManagement.Shared;
 
 namespace TrackManagement.Application.Artists;
 
@@ -12,16 +11,16 @@ public sealed class CreateArtistDtoValidator : AbstractValidator<CreateArtistDto
     {
         RuleFor(x => x.Name)
             .NotEmpty()
-            .MaximumLength(Artist.NameMaxLength);
+            .MaximumLength(ValidationConstants.Artist.NameMaxLength);
 
         RuleFor(x => x.Email)
             .NotEmpty()
-            .MaximumLength(Email.MaxLength)
+            .MaximumLength(ValidationConstants.Email.MaxLength)
             .EmailAddress();
 
         RuleFor(x => x.Country)
             .NotEmpty()
-            .Matches("^[A-Za-z]{2}$")
+            .Matches(ValidationConstants.CountryCode.InputPattern)
             .WithMessage("'Country' must be a 2-letter ISO 3166-1 alpha-2 code.");
     }
 }
