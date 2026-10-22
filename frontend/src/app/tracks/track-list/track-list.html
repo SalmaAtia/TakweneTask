@@ -1,0 +1,58 @@
+<div class="toolbar">
+  <h2>Tracks</h2>
+
+  <label>
+    Status
+    <select (change)="onStatusChange($any($event.target).value)">
+      <option value="" [selected]="isSelected(null)">All</option>
+      @for (s of statuses; track s) {
+        <option [value]="s" [selected]="isSelected(s)">{{ s }}</option>
+      }
+    </select>
+  </label>
+</div>
+
+@if (tracks.isLoading()) {
+  <p class="state" role="status">Loading tracks…</p>
+} @else if (tracks.error(); as error) {
+  <div class="state state-error" role="alert">
+    <p>Couldn't load tracks: {{ error.message }}</p>
+    <button type="button" (click)="tracks.reload()">Try again</button>
+  </div>
+} @else if (tracks.hasValue()) {
+  @if (tracks.value().length === 0) {
+    <p class="state">
+      @if (statusFilter(); as s) {
+        No {{ s }} tracks.
+      } @else {
+        No tracks yet.
+      }
+    </p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Artist</th>
+          <th>Genre</th>
+          <th>Status</th>
+          <th>Release date</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (track of tracks.value(); track track.id) {
+          <tr (click)="openTrack(track.id, $event)">
+            <td>
+              <a [routerLink]="['/tracks', track.id]">{{ track.title }}</a>
+            </td>
+            <td>{{ track.artistName }}</td>
+            <td>{{ track.genre }}</td>
+            <td><app-status-badge [status]="track.status" /></td>
+            <!-- DatePipe reads 'YYYY-MM-DD' as local midnight, so no timezone argument: the day never shifts. -->
+            <td>{{ track.releaseDate | date: 'mediumDate' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+}

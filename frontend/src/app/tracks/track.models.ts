@@ -1,7 +1,14 @@
 // Mirrors the backend DTOs in TrackManagement.Application/Tracks/Dtos.
 // Dates arrive as strings: DateOnly as 'YYYY-MM-DD', DateTimeOffset as ISO 8601.
 
-export type TrackStatus = 'Draft' | 'Submitted' | 'Distributed';
+export const TRACK_STATUSES = ['Draft', 'Submitted', 'Distributed'] as const;
+
+export type TrackStatus = (typeof TRACK_STATUSES)[number];
+
+/** The canonical status for a case-insensitive name (e.g. from a URL), or null if it isn't one. */
+export function parseTrackStatus(value: string | null | undefined): TrackStatus | null {
+  return TRACK_STATUSES.find((s) => s.toLowerCase() === value?.toLowerCase()) ?? null;
+}
 
 export type DistributionStatus = 'Pending' | 'Live' | 'Rejected';
 

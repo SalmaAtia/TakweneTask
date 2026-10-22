@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -15,13 +15,14 @@ export class TrackService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/tracks`;
 
-  getList(query: TrackListQuery = {}): Observable<Track[]> {
+  /** Pass `new HttpContext().set(HANDLES_ERRORS, true)` when the caller shows the error itself. */
+  getList(query: TrackListQuery = {}, context?: HttpContext): Observable<Track[]> {
     let params = new HttpParams();
     for (const [key, value] of Object.entries(query)) {
       if (value) params = params.set(key, value);
     }
 
-    return this.http.get<Track[]>(this.baseUrl, { params });
+    return this.http.get<Track[]>(this.baseUrl, { params, context });
   }
 
   getById(id: string): Observable<TrackDetail> {
