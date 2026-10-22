@@ -50,4 +50,11 @@ public sealed class TracksController : ControllerBase
     public async Task<ActionResult<TrackDetailDto>> ChangeStatus(
         Guid id, ChangeTrackStatusDto input, CancellationToken cancellationToken) =>
         await _trackAppService.ChangeStatusAsync(id, input, cancellationToken);
+
+    /// <summary>Records a DSP's outcome for a Pending distribution (stands in for the DSP reporting back).</summary>
+    [HttpPatch("{id:guid}/distributions/{dspId:guid}")]
+    [Authorize]
+    public async Task<ActionResult<TrackDetailDto>> ChangeDistributionStatus(
+        Guid id, Guid dspId, ChangeDistributionStatusDto input, CancellationToken cancellationToken) =>
+        await _trackAppService.ChangeDistributionStatusAsync(id, dspId, input, cancellationToken);
 }

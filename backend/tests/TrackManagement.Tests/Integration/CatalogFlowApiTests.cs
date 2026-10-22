@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc;
 using TrackManagement.Application.Artists.Dtos;
 using TrackManagement.Application.Dsps.Dtos;
 using TrackManagement.Application.Tracks.Dtos;
@@ -78,6 +79,90 @@ public sealed class CatalogFlowApiTests
         var toDraft = await client.PatchAsJsonAsync($"/api/tracks/{track.Id}/status", new ChangeTrackStatusDto("Draft"));
         Assert.Equal(HttpStatusCode.OK, toDraft.StatusCode);
         Assert.Equal("Draft", (await client.GetFromJsonAsync<TrackDetailDto>($"/api/tracks/{track.Id}"))!.Status);
+    }
+
+    [Fact]
+    public async Task Distribution_outcomes_take_a_track_to_distributed()
+    {
+        var client = await _factory.CreateAuthenticatedClientAsync();
+        var track = await CreateDistributedToSpotifyAndAppleAsync(client, "EG-FLW-26-00010");
+        var distributionUrl = (Guid dspId) => $"/api/tracks/{track.Id}/distributions/{dspId}";
+
+        // Spotify goes live (lowercase accepted), Apple Music rejects.
+        var live = await client.PatchAsJsonAsync(distributionUrl(Spotify), new ChangeDistributionStatusDto("live"));
+        Assert.Equal(HttpStatusCode.OK, live.StatusCode);
+        var afterLive = (await live.Content.ReadFromJsonAsync<TrackDetailDto>())!;
+        Assert.Equal("Live", afterLive.Distributions.Single(d => d.DspId == Spotify).Status);
+        Assert.Equal("Submitted", afterLive.Status); // the track's own status is changed separately
+
+        var rejected = await client.PatchAsJsonAsync(distributionUrl(AppleMusic), new ChangeDistributionStatusDto("Rejected"));
+        Assert.Equal(HttpStatusCode.OK, rejected.StatusCode);
+
+        // An outcome is final: a second answer for the same distribution conflicts.
+        var again = await client.PatchAsJsonAsync(distributionUrl(Spotify), new ChangeDistributionStatusDto("Rejected"));
+        Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
+
+        // With a Live distribution the track can now become Distributed, and it's saved.
+        var toDistributed = await client.PatchAsJsonAsync($"/api/tracks/{track.Id}/status", new ChangeTrackStatusDto("Distributed"));
+        Assert.Equal(HttpStatusCode.OK, toDistributed.StatusCode);
+        var final = (await client.GetFromJsonAsync<TrackDetailDto>($"/api/tracks/{track.Id}"))!;
+        Assert.Equal("Distributed", final.Status);
+        Assert.Equal(
+            [("Apple Music", "Rejected"), ("Spotify", "Live")],
+            final.Distributions.Select(d => (d.DspName, d.Status)).OrderBy(x => x.DspName));
+    }
+
+    [Theory]
+    [InlineData("Pending")] // not an outcome a caller may set
+    [InlineData("1")]
+    [InlineData("")]
+    public async Task Change_distribution_status_rejects_invalid_values_with_400(string status)
+    {
+        var client = await _factory.CreateAuthenticatedClientAsync();
+
+        var response = await client.PatchAsJsonAsync(
+            $"/api/tracks/{Guid.NewGuid()}/distributions/{Spotify}", new ChangeDistributionStatusDto(status));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        Assert.True(problem!.Errors.ContainsKey("status"));
+    }
+
+    [Fact]
+    public async Task Change_distribution_status_for_a_dsp_the_track_is_not_on_returns_404()
+    {
+        var client = await _factory.CreateAuthenticatedClientAsync();
+        var track = await CreateDistributedToSpotifyAndAppleAsync(client, "EG-FLW-26-00011");
+        var youTubeMusic = new Guid("d0000000-0000-0000-0000-000000000003");
+
+        var response = await client.PatchAsJsonAsync(
+            $"/api/tracks/{track.Id}/distributions/{youTubeMusic}", new ChangeDistributionStatusDto("Live"));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Change_distribution_status_without_a_token_returns_401()
+    {
+        var response = await _factory.CreateClient().PatchAsJsonAsync(
+            $"/api/tracks/{Guid.NewGuid()}/distributions/{Spotify}", new ChangeDistributionStatusDto("Live"));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    /// <summary>A new track for a seeded artist, distributed to Spotify and Apple Music (both Pending).</summary>
+    private static async Task<TrackDetailDto> CreateDistributedToSpotifyAndAppleAsync(HttpClient client, string isrc)
+    {
+        var nourElSayed = new Guid("a0000000-0000-0000-0000-000000000001");
+        var created = await client.PostAsJsonAsync("/api/tracks",
+            new CreateTrackDto("Outcome Test Track", nourElSayed, isrc, new DateOnly(2026, 12, 1), "Hip-Hop"));
+        created.EnsureSuccessStatusCode();
+        var track = (await created.Content.ReadFromJsonAsync<TrackDetailDto>())!;
+
+        var distributed = await client.PostAsJsonAsync(
+            $"/api/tracks/{track.Id}/distribute", new DistributeTrackDto([Spotify, AppleMusic]));
+        distributed.EnsureSuccessStatusCode();
+        return (await distributed.Content.ReadFromJsonAsync<TrackDetailDto>())!;
     }
 
     [Fact]

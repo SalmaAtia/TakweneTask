@@ -14,6 +14,7 @@ public sealed class TrackAppService : ITrackAppService
     private readonly IValidator<TrackListQueryDto> _listQueryValidator;
     private readonly IValidator<DistributeTrackDto> _distributeValidator;
     private readonly IValidator<ChangeTrackStatusDto> _changeStatusValidator;
+    private readonly IValidator<ChangeDistributionStatusDto> _changeDistributionStatusValidator;
     private readonly TrackManager _trackManager;
     private readonly ArtistManager _artistManager;
     private readonly IDspRepository _dsps;
@@ -25,6 +26,7 @@ public sealed class TrackAppService : ITrackAppService
         IValidator<TrackListQueryDto> listQueryValidator,
         IValidator<DistributeTrackDto> distributeValidator,
         IValidator<ChangeTrackStatusDto> changeStatusValidator,
+        IValidator<ChangeDistributionStatusDto> changeDistributionStatusValidator,
         TrackManager trackManager,
         ArtistManager artistManager,
         IDspRepository dsps,
@@ -35,6 +37,7 @@ public sealed class TrackAppService : ITrackAppService
         _listQueryValidator = listQueryValidator;
         _distributeValidator = distributeValidator;
         _changeStatusValidator = changeStatusValidator;
+        _changeDistributionStatusValidator = changeDistributionStatusValidator;
         _trackManager = trackManager;
         _artistManager = artistManager;
         _dsps = dsps;
@@ -108,6 +111,24 @@ public sealed class TrackAppService : ITrackAppService
         var track = await _trackManager.GetForUpdateAsync(id, cancellationToken);
 
         track.ChangeStatus(TrackStatusNames.Parse(input.Status));
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return await ToDetailDtoAsync(track, cancellationToken);
+    }
+
+    public async Task<TrackDetailDto> ChangeDistributionStatusAsync(
+        Guid id, Guid dspId, ChangeDistributionStatusDto input, CancellationToken cancellationToken = default)
+    {
+        await _changeDistributionStatusValidator.ValidateAndThrowAsync(input, cancellationToken);
+
+        var track = await _trackManager.GetForUpdateAsync(id, cancellationToken);
+
+        // The validator only lets Live and Rejected through.
+        if (DistributionOutcomeNames.Parse(input.Status) == DistributionStatus.Live)
+            track.MarkDistributionLive(dspId);
+        else
+            track.MarkDistributionRejected(dspId);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return await ToDetailDtoAsync(track, cancellationToken);
