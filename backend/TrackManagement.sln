@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackManagement.Domain", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackManagement.Infrastructure", "src\TrackManagement.Infrastructure\TrackManagement.Infrastructure.csproj", "{D5803F02-7798-403B-A666-666409251630}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{895659C1-9D02-4EFC-BA72-A535C583DD23}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackManagement.Tests", "tests\TrackManagement.Tests\TrackManagement.Tests.csproj", "{05EC39D8-08E3-439A-8E71-D62B94885509}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,11 +42,16 @@ Global
 		{D5803F02-7798-403B-A666-666409251630}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D5803F02-7798-403B-A666-666409251630}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D5803F02-7798-403B-A666-666409251630}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05EC39D8-08E3-439A-8E71-D62B94885509}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05EC39D8-08E3-439A-8E71-D62B94885509}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05EC39D8-08E3-439A-8E71-D62B94885509}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05EC39D8-08E3-439A-8E71-D62B94885509}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{AD92B17E-3F50-4899-93FF-28611C6ABC18} = {1FA5DE66-62A1-4891-A929-2C3086453E3B}
 		{9A25850D-5EEB-4976-B037-E00F33A365EA} = {1FA5DE66-62A1-4891-A929-2C3086453E3B}
 		{5F610DE4-4D75-4C96-B765-D76F1F593295} = {1FA5DE66-62A1-4891-A929-2C3086453E3B}
 		{D5803F02-7798-403B-A666-666409251630} = {1FA5DE66-62A1-4891-A929-2C3086453E3B}
+		{05EC39D8-08E3-439A-8E71-D62B94885509} = {895659C1-9D02-4EFC-BA72-A535C583DD23}
 	EndGlobalSection
 EndGlobal

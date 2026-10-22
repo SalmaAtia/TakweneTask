@@ -2,4 +2,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Tests build aggregates directly (Track.Create, Artist.Create) without going through the managers. -->
+    <InternalsVisibleTo Include="TrackManagement.Tests" />
+  </ItemGroup>
 </Project>

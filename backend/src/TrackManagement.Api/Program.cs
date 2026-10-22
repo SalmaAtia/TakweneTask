@@ -77,3 +77,6 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 
 app.Run();
+
+// Exposes the generated Program class to WebApplicationFactory<Program> in the integration tests.
+public partial class Program;
