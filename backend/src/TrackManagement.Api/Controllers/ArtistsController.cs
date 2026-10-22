@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TrackManagement.Application.Artists;
 using TrackManagement.Application.Artists.Dtos;
@@ -17,6 +18,7 @@ public sealed class ArtistsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<ActionResult<ArtistDto>> Create(CreateArtistDto input, CancellationToken cancellationToken)
     {

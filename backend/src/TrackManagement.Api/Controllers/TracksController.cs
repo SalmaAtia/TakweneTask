@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TrackManagement.Application.Tracks;
 using TrackManagement.Application.Tracks.Dtos;
@@ -17,6 +18,7 @@ public sealed class TracksController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<ActionResult<TrackDetailDto>> Create(CreateTrackDto input, CancellationToken cancellationToken)
     {
@@ -38,11 +40,13 @@ public sealed class TracksController : ControllerBase
         await _trackAppService.GetAsync(id, cancellationToken);
 
     [HttpPost("{id:guid}/distribute")]
+    [Authorize]
     public async Task<ActionResult<TrackDetailDto>> Distribute(
         Guid id, DistributeTrackDto input, CancellationToken cancellationToken) =>
         await _trackAppService.DistributeAsync(id, input, cancellationToken);
 
     [HttpPatch("{id:guid}/status")]
+    [Authorize]
     public async Task<ActionResult<TrackDetailDto>> ChangeStatus(
         Guid id, ChangeTrackStatusDto input, CancellationToken cancellationToken) =>
         await _trackAppService.ChangeStatusAsync(id, input, cancellationToken);

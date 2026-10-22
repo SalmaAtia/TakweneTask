@@ -1,8 +1,19 @@
 using System.Diagnostics;
+using Microsoft.OpenApi.Models;
+using TrackManagement.Api.Auth;
 using TrackManagement.Api.ExceptionHandling;
+using TrackManagement.Api.Swagger;
 using TrackManagement.Application;
 using TrackManagement.Domain;
 using TrackManagement.Infrastructure;
+
+if (args is [PasswordHashCommand.Argument])
+{
+    PasswordHashCommand.Run();
+    return;
+}
+
+const string AngularCorsPolicy = "Angular";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +29,27 @@ builder.Services.AddProblemDetails(options =>
     });
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition(AuthorizeOperationFilter.SchemeName, new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Paste the accessToken from POST /api/auth/login."
+    });
+    options.OperationFilter<AuthorizeOperationFilter>();
+});
 builder.Services.AddHealthChecks();
+builder.Services.AddJwtAuthentication(builder.Configuration);
+
+var corsOrigin = builder.Configuration["Cors:AllowedOrigin"];
+if (string.IsNullOrWhiteSpace(corsOrigin))
+    throw new InvalidOperationException("Cors:AllowedOrigin is required.");
+builder.Services.AddCors(options => options.AddPolicy(AngularCorsPolicy, policy => policy
+    .WithOrigins(corsOrigin)
+    .WithMethods(HttpMethods.Get, HttpMethods.Post, HttpMethods.Patch)
+    .WithHeaders("Authorization", "Content-Type")));
 
 builder.Services
     .AddDomain()
@@ -38,6 +68,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(AngularCorsPolicy);
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
