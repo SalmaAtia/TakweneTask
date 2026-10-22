@@ -171,4 +171,15 @@ describe('TrackList', () => {
 
     expect(TestBed.inject(Router).url).toBe('/tracks/t2');
   });
+
+  it('carries the status filter to the detail page (row click and title link)', async () => {
+    await load('/?status=Submitted');
+
+    const row = el().querySelectorAll<HTMLElement>('tbody tr')[1];
+    expect(row.querySelector('a')!.getAttribute('href')).toBe('/tracks/t2?status=Submitted');
+
+    row.querySelector('td:nth-child(3)')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe('/tracks/t2?status=Submitted');
+  });
 });

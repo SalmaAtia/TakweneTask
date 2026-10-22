@@ -1,0 +1,67 @@
+<p>
+  <a routerLink="/" queryParamsHandling="preserve">&larr; Back to tracks</a>
+</p>
+
+@if (track.isLoading()) {
+  <p class="state" role="status">Loading track…</p>
+} @else if (notFound()) {
+  <div class="state" role="alert">
+    <h2>Track not found</h2>
+    <p>
+      No track has the id <code>{{ id() }}</code>
+    </p>
+  </div>
+} @else if (track.error(); as error) {
+  <div class="state state-error" role="alert">
+    <p>Couldn't load the track: {{ error.message }}</p>
+    <button type="button" (click)="track.reload()">Try again</button>
+  </div>
+} @else if (track.hasValue()) {
+  @let t = track.value();
+
+  <h2>{{ t.title }}</h2>
+
+  <dl class="info">
+    <dt>Artist</dt>
+    <dd>{{ t.artistName }}</dd>
+    <dt>ISRC</dt>
+    <dd>
+      <code>{{ t.isrc }}</code>
+    </dd>
+    <dt>Genre</dt>
+    <dd>{{ t.genre }}</dd>
+    <dt>Release date</dt>
+    <!-- DatePipe reads 'YYYY-MM-DD' as local midnight, so no timezone argument: the day never shifts. -->
+    <dd>{{ t.releaseDate | date: 'mediumDate' }}</dd>
+    <dt>Status</dt>
+    <dd><app-status-badge [status]="t.status" /></dd>
+  </dl>
+
+  <h3>Distributions</h3>
+
+  @if (t.distributions.length === 0) {
+    <p class="state">Not distributed yet.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>DSP</th>
+          <th>Status</th>
+          <th>Submitted at</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (d of t.distributions; track d.dspId) {
+          <tr>
+            <td>{{ d.dspName }}</td>
+            <td><app-status-badge [status]="d.status" /></td>
+            <!-- An instant with an offset: DatePipe shows it in the viewer's local timezone. -->
+            <td>
+              <time [attr.datetime]="d.submittedAt">{{ d.submittedAt | date: 'medium' }}</time>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+}

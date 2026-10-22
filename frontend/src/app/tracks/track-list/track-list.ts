@@ -48,7 +48,8 @@ export class TrackList {
   protected openTrack(id: string, event: MouseEvent): void {
     // The title is a real link (keyboard, middle-click); don't navigate twice when it's clicked.
     if ((event.target as HTMLElement).closest('a')) return;
-    this.router.navigate(['/tracks', id]);
+    // Carry ?status= along so the detail page's back link returns to the same filter.
+    this.router.navigate(['/tracks', id], { queryParamsHandling: 'preserve' });
   }
 
   protected isSelected(status: TrackStatus | null): boolean {

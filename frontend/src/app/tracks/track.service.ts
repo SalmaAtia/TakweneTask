@@ -25,8 +25,8 @@ export class TrackService {
     return this.http.get<Track[]>(this.baseUrl, { params, context });
   }
 
-  getById(id: string): Observable<TrackDetail> {
-    return this.http.get<TrackDetail>(`${this.baseUrl}/${id}`);
+  getById(id: string, context?: HttpContext): Observable<TrackDetail> {
+    return this.http.get<TrackDetail>(`${this.baseUrl}/${id}`, { context });
   }
 
   create(request: CreateTrackRequest): Observable<TrackDetail> {

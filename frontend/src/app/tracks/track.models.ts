@@ -29,6 +29,7 @@ export interface TrackDetail {
   id: string;
   title: string;
   artistId: string;
+  artistName: string;
   isrc: string;
   releaseDate: string;
   genre: string;

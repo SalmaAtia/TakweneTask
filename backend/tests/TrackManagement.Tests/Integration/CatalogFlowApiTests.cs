@@ -44,6 +44,7 @@ public sealed class CatalogFlowApiTests
         Assert.Equal(HttpStatusCode.Created, trackResponse.StatusCode);
         var track = (await trackResponse.Content.ReadFromJsonAsync<TrackDetailDto>())!;
         Assert.Equal("Draft", track.Status);
+        Assert.Equal("Flow Test Artist", track.ArtistName);
         Assert.Equal(trackResponse.Headers.Location, new Uri(client.BaseAddress!, $"/api/tracks/{track.Id}"));
 
         // The list (filtered by artist) carries the artist's name from the batched lookup.
@@ -58,6 +59,7 @@ public sealed class CatalogFlowApiTests
         Assert.Equal(HttpStatusCode.OK, distributeResponse.StatusCode);
         var distributed = (await distributeResponse.Content.ReadFromJsonAsync<TrackDetailDto>())!;
         Assert.Equal("Submitted", distributed.Status);
+        Assert.Equal("Flow Test Artist", distributed.ArtistName);
         Assert.Equal(["Apple Music", "Spotify"], distributed.Distributions.Select(d => d.DspName).Order());
         Assert.All(distributed.Distributions, d => Assert.Equal("Pending", d.Status));
 

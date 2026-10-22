@@ -43,7 +43,9 @@
         @for (track of tracks.value(); track track.id) {
           <tr (click)="openTrack(track.id, $event)">
             <td>
-              <a [routerLink]="['/tracks', track.id]">{{ track.title }}</a>
+              <a [routerLink]="['/tracks', track.id]" queryParamsHandling="preserve">{{
+                track.title
+              }}</a>
             </td>
             <td>{{ track.artistName }}</td>
             <td>{{ track.genre }}</td>

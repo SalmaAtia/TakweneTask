@@ -1,0 +1,55 @@
+.info {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.5rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.info dt {
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.info dd {
+  margin: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+th,
+td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+th {
+  background: #f3f4f6;
+  font-size: 0.875rem;
+}
+
+.state {
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.state h2 {
+  margin-top: 0;
+}
+
+.state-error {
+  color: #991b1b;
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.state-error p {
+  margin-top: 0;
+}

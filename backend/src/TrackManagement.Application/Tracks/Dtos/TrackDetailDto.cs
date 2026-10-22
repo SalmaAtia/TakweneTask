@@ -4,6 +4,7 @@ public sealed record TrackDetailDto(
     Guid Id,
     string Title,
     Guid ArtistId,
+    string ArtistName,
     string Isrc,
     DateOnly ReleaseDate,
     string Genre,

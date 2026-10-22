@@ -10,8 +10,6 @@ namespace TrackManagement.Application.Tracks;
 
 public sealed class TrackAppService : ITrackAppService
 {
-    private static readonly IReadOnlyDictionary<Guid, string> NoDspNames = new Dictionary<Guid, string>();
-
     private readonly IValidator<CreateTrackDto> _createValidator;
     private readonly IValidator<TrackListQueryDto> _listQueryValidator;
     private readonly IValidator<DistributeTrackDto> _distributeValidator;
@@ -58,8 +56,7 @@ public sealed class TrackAppService : ITrackAppService
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // A new track is a Draft with no distributions, so there are no DSP names to load.
-        return track.ToDetailDto(NoDspNames);
+        return await ToDetailDtoAsync(track, cancellationToken);
     }
 
     public async Task<TrackDetailDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
@@ -116,12 +113,15 @@ public sealed class TrackAppService : ITrackAppService
         return await ToDetailDtoAsync(track, cancellationToken);
     }
 
-    // One batched lookup for the names of every DSP the track is distributed to.
+    // The artist's name, plus one batched lookup for the names of every DSP the track is distributed to
+    // (skipped by the repository when there are none, e.g. a new Draft).
     private async Task<TrackDetailDto> ToDetailDtoAsync(Track track, CancellationToken cancellationToken)
     {
+        var artist = await _artistManager.GetAsync(track.ArtistId, cancellationToken);
+
         var dspIds = track.Distributions.Select(d => d.DspId).Distinct().ToList();
         var dsps = await _dsps.GetByIdsAsync(dspIds, cancellationToken);
 
-        return track.ToDetailDto(dsps.ToDictionary(d => d.Id, d => d.Name));
+        return track.ToDetailDto(artist.Name, dsps.ToDictionary(d => d.Id, d => d.Name));
     }
 }

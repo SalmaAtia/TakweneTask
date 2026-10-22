@@ -16,11 +16,13 @@ internal static class TrackMappings
             track.Genre,
             track.Status.ToString());
 
-    public static TrackDetailDto ToDetailDto(this Track track, IReadOnlyDictionary<Guid, string> dspNames) =>
+    public static TrackDetailDto ToDetailDto(
+        this Track track, string artistName, IReadOnlyDictionary<Guid, string> dspNames) =>
         new(
             track.Id,
             track.Title,
             track.ArtistId,
+            artistName,
             track.Isrc.Value,
             track.ReleaseDate,
             track.Genre,
